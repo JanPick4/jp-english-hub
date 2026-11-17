@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>JP ENGLISH HUB - Portal d'Accés</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            oxford: {
+              DEFAULT: '#002147',
+              50: '#f0f5fa',
+              100: '#e0ecf6',
+              800: '#062c54',
+              900: '#002147',
+              950: '#00152e'
+            },
+            crimson: {
+              50: '#fef2f2',
+              100: '#fee2e2',
+              700: '#C8102E',
+              800: '#a50d24'
+            },
+            amber: {
+              400: '#fbbf24',
+              500: '#f59e0b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
+    .font-serif-academic { font-family: 'Playfair Display', Georgia, serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 min-h-screen selection:bg-crimson-100 selection:text-crimson-800 antialiased flex flex-col justify-between">
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const supabaseUrl = 'https://uwpweggdinunylkotqor.supabase.co';
+const supabaseKey = 'sb_publishable_pVprwi-nYLB1vG8aMmPrfA_7kVwm2JQ';
+const supabaseClient = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+
+function AuthApp() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    if (supabaseClient) {
+      supabaseClient.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setLoading(false);
+      }).catch(() => setLoading(false));
+
+      const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+        setLoading(false);
+      });
+      return () => subscription.unsubscribe();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    if (!email || !password) {
+      setErrorMsg('Si us plau, omple tots els camps obligatoris.');
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMsg('La contrasenya ha de tenir un mínim de 6 caràcters.');
+      return;
+    }
+    if (!supabaseClient) {
+      setErrorMsg('Error de connexió: client Supabase no disponible.');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      if (authMode === 'login') {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
+        });
+        if (error) {
+          setErrorMsg(error.message.includes('Invalid login credentials') 
+            ? 'Correu o contrasenya incorrectes.' 
+            : error.message);
+        } else if (data.session) {
+          setSuccessMsg('Sessió iniciada correctament!');
+        }
+      } else {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email: email.trim(),
+          password: password,
+        });
+        if (error) {
+          setErrorMsg(error.message.includes('User already registered')
+            ? 'Aquest correu ja està registrat. Inicia sessió.'
+            : error.message);
+        } else {
+          setSuccessMsg('Compte creat correctament! Si cal confirmació, revisa el teu correu.');
+        }
+      }
+    } catch (err) {
+      setErrorMsg('S\'ha produït un error de xarxa inesperat.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (supabaseClient) await supabaseClient.auth.signOut();
+    setSession(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-oxford-950 flex flex-col items-center justify-center text-white p-4">
+        <div className="w-16 h-16 rounded-full border-2 border-amber-400 p-1 bg-white mb-4 animate-pulse">
+          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlUHs_Lm3e1aF3caKkwojFkvNIEoVWlzLtaQwYrZHCc56yKkYfr0cY20meD9rWGHtCRBZOiLe8cGAjGPcsNdvs42Jk0TzyQU8zujc2WhIJ7U4pj05U0STq2i3iqRYgpPRrfdQFm_XOyHkn5AAQhe-U70ZW1iNFEX174rf_BsCDu3AJ5SX9JtHmAtJwk313zcVS0fvTuoU36aAJUZOQ2CXPYJa-kXeXa-ZbBDwDUYF8b7zZIVq_E99yJw" alt="JP" className="w-full h-full object-cover rounded-full"/>
+        </div>
+        <p className="font-mono text-xs text-slate-300">Verificant sessió acadèmica...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-between selection:bg-crimson-100 selection:text-crimson-800">
+      {/* Top Banner Accent */}
+      <div className="h-1 bg-gradient-to-r from-oxford-900 via-crimson-700 to-amber-500"></div>
+
+      {/* Main Container */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
+        {session ? (
+          /* Logged In Status Card */
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-xl p-8 text-center">
+            <div className="w-20 h-20 mx-auto rounded-full border-2 border-amber-400 p-1 bg-white shadow-md mb-4">
+              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlUHs_Lm3e1aF3caKkwojFkvNIEoVWlzLtaQwYrZHCc56yKkYfr0cY20meD9rWGHtCRBZOiLe8cGAjGPcsNdvs42Jk0TzyQU8zujc2WhIJ7U4pj05U0STq2i3iqRYgpPRrfdQFm_XOyHkn5AAQhe-U70ZW1iNFEX174rf_BsCDu3AJ5SX9JtHmAtJwk313zcVS0fvTuoU36aAJUZOQ2CXPYJa-kXeXa-ZbBDwDUYF8b7zZIVq_E99yJw" alt="JP Crest" className="w-full h-full object-cover rounded-full"/>
+            </div>
+            <span className="text-xs uppercase font-mono tracking-widest text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              Sessió Supabase Activa
+            </span>
+            <h1 className="text-2xl font-serif-academic font-bold text-oxford-950 mt-3">
+              Benvingut a JP ENGLISH HUB
+            </h1>
+            <p className="text-xs font-mono text-slate-500 mt-1 mb-6">
+              Identificat com: <strong className="text-slate-800">{session.user.email}</strong>
+            </p>
+
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-left text-xs space-y-2 mb-6">
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="font-semibold">Mòdul 1:</span>
+                <span className="font-mono text-oxford-900 font-bold">162 Verbs Irregulars (Hyper-Flow Bidireccional)</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="font-semibold">Mòdul 2:</span>
+                <span className="font-mono text-oxford-900 font-bold">107 Vocabulari & Idioms (Safe Active Recall 3D)</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="font-semibold">Autenticació:</span>
+                <span className="font-mono text-emerald-600 font-bold">Supabase Auth (Connectat)</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => alert("Sessió verificada. Accés complet als mòduls de preparació.")}
+                className="px-5 py-2.5 rounded-lg bg-oxford-900 hover:bg-oxford-800 text-white font-bold text-xs shadow-sm transition-all"
+              >
+                Continuar a l'Entrenament &rarr;
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-5 py-2.5 rounded-lg bg-crimson-50 hover:bg-crimson-100 text-crimson-700 border border-crimson-200 font-bold text-xs transition-all"
+              >
+                Tancar Sessió
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Login / Register Card */
+          <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-2xl shadow-xl shadow-slate-200/50 p-7 sm:p-9 relative">
+            {/* Header Emblem */}
+            <div className="flex flex-col items-center text-center">
+              <div className="relative mb-3">
+                <div className="w-20 h-20 rounded-full border-2 border-amber-400 bg-white p-1 shadow-md flex items-center justify-center">
+                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlUHs_Lm3e1aF3caKkwojFkvNIEoVWlzLtaQwYrZHCc56yKkYfr0cY20meD9rWGHtCRBZOiLe8cGAjGPcsNdvs42Jk0TzyQU8zujc2WhIJ7U4pj05U0STq2i3iqRYgpPRrfdQFm_XOyHkn5AAQhe-U70ZW1iNFEX174rf_BsCDu3AJ5SX9JtHmAtJwk313zcVS0fvTuoU36aAJUZOQ2CXPYJa-kXeXa-ZbBDwDUYF8b7zZIVq_E99yJw" alt="JP Emblem" className="w-full h-full object-cover rounded-full"/>
+                </div>
+                <span className="absolute -bottom-1 -right-1 bg-crimson-700 text-white font-mono text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white shadow-xs">
+                  PAU
+                </span>
+              </div>
+              <h1 className="text-2xl font-serif-academic font-bold text-oxford-950 tracking-wide">
+                JP ENGLISH HUB
+              </h1>
+              <p className="text-xs text-slate-500 uppercase font-mono font-semibold tracking-wider mt-1">
+                Portal Acadèmic PAU & Batxillerat
+              </p>
+              <div className="w-12 h-0.5 bg-crimson-700 rounded-full mt-2.5 mb-5"></div>
+            </div>
+
+            {/* Auth Mode Toggle */}
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold mb-6">
+              <button
+                type="button"
+                onClick={() => { setAuthMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+                className={`flex-1 py-2 rounded-lg transition-all text-center ${
+                  authMode === 'login'
+                    ? 'bg-oxford-900 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:text-oxford-900'
+                }`}
+              >
+                Iniciar Sessió
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAuthMode('register'); setErrorMsg(''); setSuccessMsg(''); }}
+                className={`flex-1 py-2 rounded-lg transition-all text-center ${
+                  authMode === 'register'
+                    ? 'bg-oxford-900 text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:text-oxford-900'
+                }`}
+              >
+                Crear Compte
+              </button>
+            </div>
+
+            {/* Error Notification */}
+            {errorMsg && (
+              <div className="mb-4 p-3 rounded-lg bg-crimson-50 border border-crimson-200 text-crimson-800 text-xs flex items-start gap-2">
+                <span className="text-crimson-700 font-bold shrink-0">⚠️</span>
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Success Notification */}
+            {successMsg && (
+              <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
+                <span className="text-emerald-700 font-bold shrink-0">✓</span>
+                <span>{successMsg}</span>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleAuth} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Correu electrònic
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="estudiant@exemple.cat"
+                  autoComplete="email"
+                  required
+                  className="w-full text-base sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-oxford-700 focus:ring-1 focus:ring-oxford-700 shadow-xs"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Contrasenya
+                  </label>
+                  {authMode === 'register' && (
+                    <span className="text-[10px] text-slate-400 font-mono">mínim 6 caràcters</span>
+                  )}
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
+                  required
+                  className="w-full text-base sm:text-sm px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-oxford-700 focus:ring-1 focus:ring-oxford-700 shadow-xs"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={actionLoading}
+                className="w-full mt-2 py-2.5 px-4 rounded-lg bg-crimson-700 hover:bg-crimson-800 active:bg-crimson-900 text-white font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {actionLoading ? (
+                  <span>Processant sol·licitud...</span>
+                ) : authMode === 'login' ? (
+                  <span>Iniciar Sessió</span>
+                ) : (
+                  <span>Crear Compte Oficial</span>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-6 pt-5 border-t border-slate-100 text-center text-xs text-slate-500">
+              {authMode === 'login' ? (
+                <p>
+                  Encara no tens un compte?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('register'); setErrorMsg(''); setSuccessMsg(''); }}
+                    className="font-bold text-oxford-900 hover:text-crimson-700 underline"
+                  >
+                    Registra't aquí
+                  </button>
+                </p>
+              ) : (
+                <p>
+                  Ja disposes de compte acadèmic?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+                    className="font-bold text-oxford-900 hover:text-crimson-700 underline"
+                  >
+                    Inicia sessió
+                  </button>
+                </p>
+              )}
+            </div>
+
+            <div className="mt-5 text-center">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-slate-400 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
+                <span>🔒</span> Autenticació Segura Supabase
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Credits */}
+      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-300">
+              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlUHs_Lm3e1aF3caKkwojFkvNIEoVWlzLtaQwYrZHCc56yKkYfr0cY20meD9rWGHtCRBZOiLe8cGAjGPcsNdvs42Jk0TzyQU8zujc2WhIJ7U4pj05U0STq2i3iqRYgpPRrfdQFm_XOyHkn5AAQhe-U70ZW1iNFEX174rf_BsCDu3AJ5SX9JtHmAtJwk313zcVS0fvTuoU36aAJUZOQ2CXPYJa-kXeXa-ZbBDwDUYF8b7zZIVq_E99yJw" alt="JP" className="w-full h-full object-cover"/>
+            </div>
+            <span className="font-serif-academic font-bold text-oxford-900">
+              JP ENGLISH HUB • Desenvolupat per <strong className="text-crimson-700">JanPick</strong>
+            </span>
+          </div>
+          <span>100% en Català • Preparat per a Batxillerat i PAU</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<AuthApp />);
+</script>
+</body>
+</html>
