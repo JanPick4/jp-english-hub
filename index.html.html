@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+
+<html lang="ca"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>JP ENGLISH HUB - Batxillerat &amp; PAU</title>
+<!-- Tailwind CSS CDN with forms & container-queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            oxford: {
+              DEFAULT: '#002147',
+              50: '#f0f5fa',
+              100: '#e0ecf6',
+              200: '#bad5ed',
+              700: '#0c3866',
+              800: '#062c54',
+              900: '#002147',
+              950: '#00152e'
+            },
+            crimson: {
+              50: '#fef2f2',
+              100: '#fee2e2',
+              200: '#fecaca',
+              600: '#dc2626',
+              700: '#C8102E',
+              800: '#a50d24',
+              900: '#7f1d1d'
+            },
+            amber: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706'
+            }
+          }
+        }
+      }
+    }
+  </script>
+<!-- Supabase JS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- React, ReactDOM, Babel -->
+<script crossorigin="" src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin="" src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- Canvas Confetti -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,600;0,700;1,600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    .font-serif-academic {
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    /* 3D Flip Card Styles */
+    .perspective-container {
+      perspective: 1200px;
+    }
+    .card-3d-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+    .card-3d-inner.flipped {
+      transform: rotateY(180deg);
+    }
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      border-radius: 1rem;
+    }
+    .card-face-back {
+      transform: rotateY(180deg);
+    }
+
+    /* Page View Transitions */
+    .view-enter {
+      animation: viewFadeSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes viewFadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Splash Screen Glow Keyframes */
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.4), 0 0 60px -10px rgba(200, 16, 46, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 45px 5px rgba(245, 158, 11, 0.65), 0 0 85px 5px rgba(200, 16, 46, 0.45);
+      }
+    }
+    .splash-glow-ring {
+      animation: pulseGlow 2.4s infinite ease-in-out;
+    }
+
+    /* Custom Clean Light Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+</style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 min-h-screen selection:bg-crimson-100 selection:text-crimson-800 antialiased">
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo } = React;
+
+// --- SUPABASE INITIALIZATION ---
+const supabaseUrl = 'https://uwpweggdinunylkotqor.supabase.co';
+const supabaseKey = 'sb_publishable_pVprwi-nYLB1vG8aMmPrfA_7kVwm2JQ';
+const supabaseClient = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+
+// --- VERBS DATA (ALL 162 VERBS) ---
+const VERBS_DATA = [
+  // AAA (21)
+  { id: 1, type: "AAA", inf: "bet", past: "bet", part: "bet", cat: "apostar" },
+  { id: 2, type: "AAA", inf: "let", past: "let", part: "let", cat: "permetre, deixar" },
+  { id: 3, type: "AAA", inf: "set", past: "set", part: "set", cat: "establir, posar" },
+  { id: 4, type: "AAA", inf: "upset", past: "upset", part: "upset", cat: "disgustar, alterar" },
+  { id: 5, type: "AAA", inf: "read", past: "read", part: "read", cat: "llegir" },
+  { id: 6, type: "AAA", inf: "spread", past: "spread", part: "spread", cat: "estendre" },
+  { id: 7, type: "AAA", inf: "hit", past: "hit", part: "hit", cat: "colpejar, encertar, pegar" },
+  { id: 8, type: "AAA", inf: "quit", past: "quit", part: "quit", cat: "abandonar, deixar" },
+  { id: 9, type: "AAA", inf: "slit", past: "slit", part: "slit", cat: "tallar, esquinçar" },
+  { id: 10, type: "AAA", inf: "split", past: "split", part: "split", cat: "partir, dividir" },
+  { id: 11, type: "AAA", inf: "cut", past: "cut", part: "cut", cat: "tallar" },
+  { id: 12, type: "AAA", inf: "shut", past: "shut", part: "shut", cat: "tancar" },
+  { id: 13, type: "AAA", inf: "hurt", past: "hurt", part: "hurt", cat: "ferir, lesionar" },
+  { id: 14, type: "AAA", inf: "burst", past: "burst", part: "burst", cat: "esclatar" },
+  { id: 15, type: "AAA", inf: "cast", past: "cast", part: "cast", cat: "llançar, projectar" },
+  { id: 16, type: "AAA", inf: "cost", past: "cost", part: "cost", cat: "costar, valer" },
+  { id: 17, type: "AAA", inf: "forecast", past: "forecast", part: "forecast", cat: "predir, pronosticar" },
+  { id: 18, type: "AAA", inf: "put", past: "put", part: "put", cat: "posar, col·locar" },
+  { id: 19, type: "AAA", inf: "shed", past: "shed", part: "shed", cat: "desprendre, vessar" },
+  { id: 20, type: "AAA", inf: "beat", past: "beat", part: "beat", altPart: "beaten", cat: "colpejar, vèncer" },
+  { id: 21, type: "AAA", inf: "bid", past: "bid", altPast: "bade", part: "bid", altPart: "bidden", cat: "oferir, licitar" },
+
+  // ABA (4)
+  { id: 22, type: "ABA", inf: "become", past: "became", part: "become", cat: "arribar a ser, esdevenir" },
+  { id: 23, type: "ABA", inf: "come", past: "came", part: "come", cat: "venir, arribar, anar" },
+  { id: 24, type: "ABA", inf: "overcome", past: "overcame", part: "overcome", cat: "superar" },
+  { id: 25, type: "ABA", inf: "run", past: "ran", part: "run", cat: "córrer, dirigir un negoci" },
+
+  // ABB (75)
+  { id: 26, type: "ABB", inf: "leap", past: "leapt", part: "leapt", cat: "saltar" },
+  { id: 27, type: "ABB", inf: "bend", past: "bent", part: "bent", cat: "doblegar, torcer" },
+  { id: 28, type: "ABB", inf: "lend", past: "lent", part: "lent", cat: "prestar" },
+  { id: 29, type: "ABB", inf: "send", past: "sent", part: "sent", cat: "enviar" },
+  { id: 30, type: "ABB", inf: "spend", past: "spent", part: "spent", cat: "gastar, passar temps" },
+  { id: 31, type: "ABB", inf: "build", past: "built", part: "built", cat: "construir" },
+  { id: 32, type: "ABB", inf: "burn", past: "burnt", part: "burnt", cat: "cremar, incendiar" },
+  { id: 33, type: "ABB", inf: "deal", past: "dealt", part: "dealt", cat: "repartir, negociar" },
+  { id: 34, type: "ABB", inf: "lean", past: "leant", part: "leant", cat: "inclinar-se" },
+  { id: 35, type: "ABB", inf: "dream", past: "dreamt", part: "dreamt", cat: "somiar" },
+  { id: 36, type: "ABB", inf: "learn", past: "learnt", part: "learnt", cat: "aprendre" },
+  { id: 37, type: "ABB", inf: "mean", past: "meant", part: "meant", cat: "significar" },
+  { id: 38, type: "ABB", inf: "bring", past: "brought", part: "brought", cat: "portar" },
+  { id: 39, type: "ABB", inf: "buy", past: "bought", part: "bought", cat: "comprar" },
+  { id: 40, type: "ABB", inf: "catch", past: "caught", part: "caught", cat: "agafar, atrapar" },
+  { id: 41, type: "ABB", inf: "teach", past: "taught", part: "taught", cat: "ensenyar" },
+  { id: 42, type: "ABB", inf: "think", past: "thought", part: "thought", cat: "pensar" },
+  { id: 43, type: "ABB", inf: "fight", past: "fought", part: "fought", cat: "lluitar" },
+  { id: 44, type: "ABB", inf: "seek", past: "sought", part: "sought", cat: "buscar" },
+  { id: 45, type: "ABB", inf: "creep", past: "crept", part: "crept", cat: "arrossegar-se" },
+  { id: 46, type: "ABB", inf: "sweep", past: "swept", part: "swept", cat: "escombrar" },
+  { id: 47, type: "ABB", inf: "weep", past: "wept", part: "wept", cat: "plorar" },
+  { id: 48, type: "ABB", inf: "sleep", past: "slept", part: "slept", cat: "dormir" },
+  { id: 49, type: "ABB", inf: "keep", past: "kept", part: "kept", cat: "guardar, conservar" },
+  { id: 50, type: "ABB", inf: "feel", past: "felt", part: "felt", cat: "sentir, palpar" },
+  { id: 51, type: "ABB", inf: "kneel", past: "knelt", part: "knelt", cat: "agenollar-se" },
+  { id: 52, type: "ABB", inf: "smell", past: "smelt", part: "smelt", cat: "olorar" },
+  { id: 53, type: "ABB", inf: "spell", past: "spelt", part: "spelt", cat: "deletrejar" },
+  { id: 54, type: "ABB", inf: "leave", past: "left", part: "left", cat: "deixar, sortir de" },
+  { id: 55, type: "ABB", inf: "mislead", past: "misled", part: "misled", cat: "enganyar" },
+  { id: 56, type: "ABB", inf: "feed", past: "fed", part: "fed", cat: "alimentar" },
+  { id: 57, type: "ABB", inf: "bleed", past: "bled", part: "bled", cat: "sagnar" },
+  { id: 58, type: "ABB", inf: "flee", past: "fled", part: "fled", cat: "fugir" },
+  { id: 59, type: "ABB", inf: "lead", past: "led", part: "led", cat: "conduir, guiar" },
+  { id: 60, type: "ABB", inf: "hear", past: "heard", part: "heard", cat: "sentir amb l'oïda" },
+  { id: 61, type: "ABB", inf: "grind", past: "ground", part: "ground", cat: "moldre" },
+  { id: 62, type: "ABB", inf: "find", past: "found", part: "found", cat: "trobar" },
+  { id: 63, type: "ABB", inf: "bind", past: "bound", part: "bound", cat: "lligar, unir" },
+  { id: 64, type: "ABB", inf: "wind", past: "wound", part: "wound", cat: "enrotllar" },
+  { id: 65, type: "ABB", inf: "have", past: "had", part: "had", cat: "haver o tenir" },
+  { id: 66, type: "ABB", inf: "hang", past: "hung", part: "hung", cat: "penjar" },
+  { id: 67, type: "ABB", inf: "dig", past: "dug", part: "dug", cat: "cavar" },
+  { id: 68, type: "ABB", inf: "stick", past: "stuck", part: "stuck", cat: "enganxar" },
+  { id: 69, type: "ABB", inf: "strike", past: "struck", part: "struck", cat: "colpejar" },
+  { id: 70, type: "ABB", inf: "cling", past: "clung", part: "clung", cat: "aferrar-se" },
+  { id: 71, type: "ABB", inf: "sting", past: "stung", part: "stung", cat: "punxar" },
+  { id: 72, type: "ABB", inf: "swing", past: "swung", part: "swung", cat: "balancejar" },
+  { id: 73, type: "ABB", inf: "wring", past: "wrung", part: "wrung", cat: "retòrcer" },
+  { id: 74, type: "ABB", inf: "spin", past: "spun", part: "spun", cat: "girar" },
+  { id: 75, type: "ABB", inf: "win", past: "won", part: "won", cat: "guanyar" },
+  { id: 76, type: "ABB", inf: "slink", past: "slunk", part: "slunk", cat: "escapolir-se" },
+  { id: 77, type: "ABB", inf: "get", past: "got", part: "got", cat: "aconseguir, obtenir" },
+  { id: 78, type: "ABB", inf: "hold", past: "held", part: "held", cat: "sostenir" },
+  { id: 79, type: "ABB", inf: "shine", past: "shone", part: "shone", cat: "brillar" },
+  { id: 80, type: "ABB", inf: "sit", past: "sat", part: "sat", cat: "asseure's" },
+  { id: 81, type: "ABB", inf: "pay", past: "paid", part: "paid", cat: "pagar" },
+  { id: 82, type: "ABB", inf: "say", past: "said", part: "said", cat: "dir" },
+  { id: 83, type: "ABB", inf: "shoot", past: "shot", part: "shot", cat: "disparar" },
+  { id: 84, type: "ABB", inf: "light", past: "lit", part: "lit", cat: "encendre" },
+  { id: 85, type: "ABB", inf: "lose", past: "lost", part: "lost", cat: "perdre" },
+  { id: 86, type: "ABB", inf: "make", past: "made", part: "made", cat: "fer, crear" },
+  { id: 87, type: "ABB", inf: "meet", past: "met", part: "met", cat: "trobar-se amb" },
+  { id: 88, type: "ABB", inf: "slide", past: "slid", part: "slid", cat: "lliscar" },
+  { id: 89, type: "ABB", inf: "speed", past: "sped", part: "sped", cat: "anar ràpid" },
+  { id: 90, type: "ABB", inf: "sneak", past: "snuck", part: "snuck", cat: "colar-se" },
+  { id: 91, type: "ABB", inf: "spill", past: "spilt", part: "spilt", cat: "vessar" },
+  { id: 92, type: "ABB", inf: "spoil", past: "spoilt", part: "spoilt", cat: "espatllar" },
+  { id: 93, type: "ABB", inf: "understand", past: "understood", part: "understood", cat: "entendre" },
+  { id: 94, type: "ABB", inf: "stand", past: "stood", part: "stood", cat: "estar dempeus" },
+  { id: 95, type: "ABB", inf: "withstand", past: "withstood", part: "withstood", cat: "resistir" },
+  { id: 96, type: "ABB", inf: "tell", past: "told", part: "told", cat: "dir, narrar" },
+  { id: 97, type: "ABB", inf: "sell", past: "sold", part: "sold", cat: "vendre" },
+  { id: 98, type: "ABB", inf: "retell", past: "retold", part: "retold", cat: "tornar a explicar" },
+  { id: 99, type: "ABB", inf: "overhear", past: "overheard", part: "overheard", cat: "sentir per casualitat" },
+  { id: 100, type: "ABB", inf: "remake", past: "remade", part: "remade", cat: "refer" },
+
+  // ABC (62)
+  { id: 101, type: "ABC", inf: "begin", past: "began", part: "begun", cat: "començar" },
+  { id: 102, type: "ABC", inf: "drink", past: "drank", part: "drunk", cat: "beure" },
+  { id: 103, type: "ABC", inf: "ring", past: "rang", part: "rung", cat: "fer sonar, trucar" },
+  { id: 104, type: "ABC", inf: "shrink", past: "shrank", part: "shrunk", cat: "encongir" },
+  { id: 105, type: "ABC", inf: "sing", past: "sang", part: "sung", cat: "cantar" },
+  { id: 106, type: "ABC", inf: "sink", past: "sank", part: "sunk", cat: "enfonsar" },
+  { id: 107, type: "ABC", inf: "spring", past: "sprang", part: "sprung", cat: "moure's ràpidament" },
+  { id: 108, type: "ABC", inf: "stink", past: "stank", altPast: "stunk", part: "stunk", cat: "apestar" },
+  { id: 109, type: "ABC", inf: "swim", past: "swam", part: "swum", cat: "nedar" },
+  { id: 110, type: "ABC", inf: "blow", past: "blew", part: "blown", cat: "bufar" },
+  { id: 111, type: "ABC", inf: "draw", past: "drew", part: "drawn", cat: "dibuixar" },
+  { id: 112, type: "ABC", inf: "fly", past: "flew", part: "flown", cat: "volar" },
+  { id: 113, type: "ABC", inf: "grow", past: "grew", part: "grown", cat: "créixer" },
+  { id: 114, type: "ABC", inf: "know", past: "knew", part: "known", cat: "saber, conèixer" },
+  { id: 115, type: "ABC", inf: "throw", past: "threw", part: "thrown", cat: "llençar" },
+  { id: 116, type: "ABC", inf: "overthrow", past: "overthrew", part: "overthrown", cat: "enderrocar" },
+  { id: 117, type: "ABC", inf: "withdraw", past: "withdrew", part: "withdrawn", cat: "retirar" },
+  { id: 118, type: "ABC", inf: "show", past: "showed", part: "shown", cat: "mostrar" },
+  { id: 119, type: "ABC", inf: "sew", past: "sewed", part: "sewn", cat: "cosir" },
+  { id: 120, type: "ABC", inf: "sow", past: "sowed", part: "sown", cat: "sembrar" },
+  { id: 121, type: "ABC", inf: "arise", past: "arose", part: "risen", cat: "sorgir" },
+  { id: 122, type: "ABC", inf: "rise", past: "rose", part: "risen", cat: "alçar, augmentar" },
+  { id: 123, type: "ABC", inf: "choose", past: "chose", part: "chosen", cat: "escollir" },
+  { id: 124, type: "ABC", inf: "ride", past: "rode", part: "ridden", cat: "muntar a" },
+  { id: 125, type: "ABC", inf: "write", past: "wrote", part: "written", cat: "escriure" },
+  { id: 126, type: "ABC", inf: "drive", past: "drove", part: "driven", cat: "conduir" },
+  { id: 127, type: "ABC", inf: "freeze", past: "froze", part: "frozen", cat: "congelar" },
+  { id: 128, type: "ABC", inf: "break", past: "broke", part: "broken", cat: "trencar" },
+  { id: 129, type: "ABC", inf: "speak", past: "spoke", part: "spoken", cat: "parlar" },
+  { id: 130, type: "ABC", inf: "wake", past: "woke", part: "woken", cat: "despertar" },
+  { id: 131, type: "ABC", inf: "awake", past: "awoke", part: "awoken", cat: "despertar-se" },
+  { id: 132, type: "ABC", inf: "steal", past: "stole", part: "stolen", cat: "robar" },
+  { id: 133, type: "ABC", inf: "overtake", past: "overtook", part: "overtaken", cat: "avançar, superar" },
+  { id: 134, type: "ABC", inf: "rewrite", past: "rewrote", part: "rewritten", cat: "reescriure" },
+  { id: 135, type: "ABC", inf: "forget", past: "forgot", part: "forgotten", cat: "oblidar" },
+  { id: 136, type: "ABC", inf: "forbid", past: "forbade", part: "forbidden", cat: "prohibir" },
+  { id: 137, type: "ABC", inf: "eat", past: "ate", part: "eaten", cat: "menjar" },
+  { id: 138, type: "ABC", inf: "give", past: "gave", part: "given", cat: "donar" },
+  { id: 139, type: "ABC", inf: "forgive", past: "forgave", part: "forgiven", cat: "perdonar" },
+  { id: 140, type: "ABC", inf: "forsake", past: "forsook", part: "forsaken", cat: "abandonar" },
+  { id: 141, type: "ABC", inf: "shake", past: "shook", part: "shaken", cat: "sacsejar" },
+  { id: 142, type: "ABC", inf: "take", past: "took", part: "taken", cat: "agafar" },
+  { id: 143, type: "ABC", inf: "fall", past: "fell", part: "fallen", cat: "caure" },
+  { id: 144, type: "ABC", inf: "bite", past: "bit", part: "bitten", cat: "mossegar" },
+  { id: 145, type: "ABC", inf: "hide", past: "hid", part: "hidden", cat: "amagar" },
+  { id: 146, type: "ABC", inf: "bear", past: "bore", part: "borne", cat: "suportar" },
+  { id: 147, type: "ABC", inf: "swear", past: "swore", part: "sworn", cat: "jurar" },
+  { id: 148, type: "ABC", inf: "tear", past: "tore", part: "torn", cat: "esquinçar" },
+  { id: 149, type: "ABC", inf: "wear", past: "wore", part: "worn", cat: "portar posat" },
+  { id: 150, type: "ABC", inf: "be", past: "was", altPast: "were", part: "been", cat: "ser o estar" },
+  { id: 151, type: "ABC", inf: "do", past: "did", part: "done", cat: "fer" },
+  { id: 152, type: "ABC", inf: "go", past: "went", part: "gone", cat: "anar" },
+  { id: 153, type: "ABC", inf: "see", past: "saw", part: "seen", cat: "veure" },
+  { id: 154, type: "ABC", inf: "lie", past: "lay", part: "lain", cat: "estar estirat, jaure" },
+  { id: 155, type: "ABC", inf: "dive", past: "dove", altPast: "dived", part: "dived", cat: "capbussar-se" },
+  { id: 156, type: "ABC", inf: "prove", past: "proved", part: "proven", altPart: "proved", cat: "demostrar" },
+  { id: 157, type: "ABC", inf: "slay", past: "slew", part: "slain", cat: "matar, assassinar" },
+  { id: 158, type: "ABC", inf: "strive", past: "strove", part: "striven", cat: "esforçar-se" },
+  { id: 159, type: "ABC", inf: "undergo", past: "underwent", part: "undergone", cat: "sotmetre's a" },
+  { id: 160, type: "ABC", inf: "redo", past: "redid", part: "redone", cat: "refer" },
+  { id: 161, type: "ABC", inf: "tread", past: "trode", part: "trodden", altPart: "trod", cat: "trepitjar" },
+  { id: 162, type: "ABC", inf: "weave", past: "wove", part: "woven", cat: "teixir" }
+];
+
+// --- VOCABULARY DATA (ALL 107 EXPRESSIONS) ---
+const VOCAB_DATA = [
+  // DILLUNS (32)
+  { id: "d1", cat: "El client va anar a la botiga un altre cop", eng: "The customer went to the shop again", day: "Dilluns" },
+  { id: "d2", cat: "El ruc tossut va arrossegar la Shula pel camp.", eng: "The stubborn donkey dragged Shula across the field.", day: "Dilluns" },
+  { id: "d3", cat: "La Jill s'ha guanyat un descans a la seva edat.", eng: "Jill has earned a break in her old age.", day: "Dilluns" },
+  { id: "d4", cat: "El Kenton assenyala la lleu hipocresia de l'Elizabeth.", eng: "Kenton points out Elizabeth's mild hypocrisy.", day: "Dilluns" },
+  { id: "d5", cat: "Un dels seus grans reptes en aquest punt és contractar nous professors.", eng: "One of his greatest challenges at this point is to recruit new teachers", day: "Dilluns" },
+  { id: "d6", cat: "L'Aneguet Lleig", eng: "\"The Ugly Duckling\"", day: "Dilluns" },
+  { id: "d7", cat: "La Sireneta", eng: "\"The Little Mermaid\"", day: "Dilluns" },
+  { id: "d8", cat: "La Caputxeta Vermella", eng: "\"Little Red Riding Hood\"", day: "Dilluns" },
+  { id: "d9", cat: "La Ventafocs", eng: "\"Cinderella\"", day: "Dilluns" },
+  { id: "d10", cat: "La Blancaneu i els 7 nans", eng: "\"Snow White and The Seven Dwarfs\"", day: "Dilluns" },
+  { id: "d11", cat: "La Bella Dorment", eng: "\"Sleeping Beauty\"", day: "Dilluns" },
+  { id: "d12", cat: "La Bella i la Bèstia", eng: "\"Beauty and the Beast\"", day: "Dilluns" },
+  { id: "d13", cat: "Els Tres Porquets", eng: "\"The Three Little Pigs\"", day: "Dilluns" },
+  { id: "d14", cat: "Aladí i la Làmpada Meravellosa", eng: "Aladdin \"and the Wonderful Lamp\"", day: "Dilluns" },
+  { id: "d15", cat: "L'Alícia al País de les Meravelles", eng: "Alice \"in wonderland\"", day: "Dilluns" },
+  { id: "d16", cat: "Una tireta (UK / USA)", eng: "A strip, a sticking-plaster (UK) or Band-aid (USA)", day: "Dilluns" },
+  { id: "d17", cat: "El Roy està molest amb l'Elizabeth per acollir la festa del funeral del John Tregorran sense consultar-l'hi.", eng: "Roy is annoyed with Elizabeth for hosting John Tregorran's funeral party without consulting him.", day: "Dilluns" },
+  { id: "d18", cat: "Ell percep que l'Elizabeth no vol estar a soles amb ell.", eng: "He senses that Elizabeth doesn't want to be alone with him", day: "Dilluns" },
+  { id: "d19", cat: "Fica't en els teus assumptes! va etzibar ell.", eng: "Mind your own business!' he snapped.", day: "Dilluns" },
+  { id: "d20", cat: "El John Tregorran va tenir una aventura amb la Jennifer.", eng: "John Tregorran had a fling with Jennifer", day: "Dilluns" },
+  { id: "d21", cat: "Durant les properes dues setmanes.", eng: "Over the next couple of weeks.", day: "Dilluns" },
+  { id: "d22", cat: "Caixes de begudes (amb separadors)", eng: "Crates", day: "Dilluns" },
+  { id: "d23", cat: "La Hayley n'està farta.", eng: "Hayley is fed up.", day: "Dilluns" },
+  { id: "d24", cat: "La Fallon està intimidada per la seva nova aventura empresarial en solitari.", eng: "Fallon is daunted by her new solo business venture.", day: "Dilluns" },
+  { id: "d25", cat: "Li adverteix a la Fallon que no capfiqui massa les coses.", eng: "She warns Fallon not to overthink things.", day: "Dilluns" },
+  { id: "d26", cat: "El Rob deixa l'Henry a Bridge Farm, però ell està aferrat i no deixa anar el Rob.", eng: "Rob drops Henry round to Bridge Farm but he is clingy and won't let Rob go.", day: "Dilluns" },
+  { id: "d27", cat: "Ell tanca el bec sobre el que va passar divendres passat, quan els seus pares no es van presentar.", eng: "He clams up about last Friday, when his parents were a no-show", day: "Dilluns" },
+  { id: "d28", cat: "No fiquis el nas on no et demanen!", eng: "Don't stick your nose in!", day: "Dilluns" },
+  { id: "d29", cat: "El Roy va endarrerit a la feina.", eng: "Roy is held up at work.", day: "Dilluns" },
+  { id: "d30", cat: "La Susan s'està adaptant com a usuària de Twitter.", eng: "Susan's finding her feet as a Twitter user", day: "Dilluns" },
+  { id: "d31", cat: "Ell es creu superior (cregut).", eng: "He seems full of himself.", day: "Dilluns" },
+  { id: "d32", cat: "Si restem 4 de 12 obtenim 8.", eng: "If we take 4 away from 12 we get 8.", day: "Dilluns" },
+
+  // DIMARTS (31)
+  { id: "dm1", cat: "Està en números vermells (números vermells / deutes).", eng: "He is in the red.", day: "Dimarts" },
+  { id: "dm2", cat: "El Roy té l'Elizabeth en un pedestal (l'admira moltíssim).", eng: "Roy thinks the world of Elizabeth.", day: "Dimarts" },
+  { id: "dm3", cat: "L'Elizabeth admet que no és just per a la Hayley.", eng: "Elizabeth concedes that it's not fair on Hayley.", day: "Dimarts" },
+  { id: "dm4", cat: "Els alumnes exhibeixen els seus pòsters.", eng: "Students showcase their posters.", day: "Dimarts" },
+  { id: "dm5", cat: "Hi ha molta expectació / rebombori sobre la festa de recaptació d'avui.", eng: "There's a buzz around today's fete.", day: "Dimarts" },
+  { id: "dm6", cat: "Tinc un atles a mà.", eng: "I have an atlas on hand.", day: "Dimarts" },
+  { id: "dm7", cat: "La Vicky està al límit de la seva paciència amb la inquieta Bethany.", eng: "Vicky's at the end of her tether with unsettled Bethany.", day: "Dimarts" },
+  { id: "dm8", cat: "Disgustada / Contrariada per suposadament no haver estat convidada a la festa de la Jennifer.", eng: "Susan's disgruntled at supposedly not being invited to Jennifer's party.", day: "Dimarts" },
+  { id: "dm9", cat: "La Lynda espera notícies.", eng: "Lynda's awaiting some news.", day: "Dimarts" },
+  { id: "dm10", cat: "Mostra amb claredat el que es faria malbé pel traçat.", eng: "The film shows off what would be damaged by the route.", day: "Dimarts" },
+  { id: "dm11", cat: "Presumir: Li agrada portar faldilles curtes per lluir les cames.", eng: "She likes to wear short skirts to show off her legs.", day: "Dimarts" },
+  { id: "dm12", cat: "Els investigadors diuen que han fet un gran avenç en el tractament del càncer.", eng: "Researchers say they have made a major breakthrough in cancer treatment.", day: "Dimarts" },
+  { id: "dm13", cat: "La Hayley deixa escapar que va parlar amb l'Elizabeth sobre la càrrega de feina del Roy.", eng: "Hayley lets slip that she spoke to Elizabeth about her concerns over Roy's workload.", day: "Dimarts" },
+  { id: "dm14", cat: "L'Ed ha fet formació en línia i sap com funciona tot.", eng: "Ed has done some online training and knows the ropes.", day: "Dimarts" },
+  { id: "dm15", cat: "Va anar al seu despatx amb el pretext de demanar-li consell.", eng: "He went to her office on the pretence of asking for some advice.", day: "Dimarts" },
+  { id: "dm16", cat: "Saps què? Et convido a sopar aquesta nit perquè és el teu aniversari.", eng: "You know what? I'll treat you to dinner tonight because it's your birthday.", day: "Dimarts" },
+  { id: "dm17", cat: "Encantada, però dissimulant el seu entusiasme, la Susan accepta mirar la seva agenda.", eng: "Delighted but playing it cool, Susan agrees to check her diary. She may be free to attend...", day: "Dimarts" },
+  { id: "dm18", cat: "L'Emma i la Susan s'estan fent un canvi d'imatge per a l'aniversari de l'Emma.", eng: "Emma and Susan are having a makeover for Emma's birthday.", day: "Dimarts" },
+  { id: "dm19", cat: "Vés i fes la maleta, però no t'entretinguis: hem de marxar d'aquí a una hora.", eng: "Go and pack but don't hang around/about- we have to go in an hour.", day: "Dimarts" },
+  { id: "dm20", cat: "L'Emma puntualitza que les perles són per als 30 anys de casats.", eng: "Emma points out that pearls are for 30 years of marriage.", day: "Dimarts" },
+  { id: "dm21", cat: "L'acusa de parar-li un parany deliberadament.", eng: "He is accusing him of deliberately laying a trap.", day: "Dimarts" },
+  { id: "dm22", cat: "La Leoni surt de comptes (endarrerida respecte al part).", eng: "Leoni is slightly overdue to give birth.", day: "Dimarts" },
+  { id: "dm23", cat: "El Mike frena la Vicky abans que reveli els seus plans.", eng: "Mike holds Vicky back from revealing their planes.", day: "Dimarts" },
+  { id: "dm24", cat: "El Roy li dóna al Freddie el seu passi de seguretat i l'envia a fer un encàrrec.", eng: "Roy gives Freddie his security pass and gets him to run an errand.", day: "Dimarts" },
+  { id: "dm25", cat: "L'Elizabeth sent que li ha fallat al Nigel.", eng: "Elizabeth feels she has let Nigel down.", day: "Dimarts" },
+  { id: "dm26", cat: "L'Eddie convenç l'Ed, que està esgotat, que es quedi a dormir.", eng: "Eddie persuades exhausted Ed to stay over.", day: "Dimarts" },
+  { id: "dm27", cat: "Es va incrementar la seguretat davant el temor de nous atacs terroristes.", eng: "Security was increased amid fears of further terrorist attacks.", day: "Dimarts" },
+  { id: "dm28", cat: "La Ruth s'assabenta que la seva mare no està bé; la Ruth hauria de deixar la producció de llet del tot.", eng: "Ruth learns that her mum Heather is not well. Ruth should get out of milk altogether.", day: "Dimarts" },
+  { id: "dm29", cat: "La Leonie finalment es posa de part / dóna a llum.", eng: "Leonie finally goes into labour", day: "Dimarts" },
+  { id: "dm30", cat: "L'Elizabeth li retira al Freddie la polsera i el passi: està castigat.", eng: "Elizabeth takes Freddie's wrist band and security pass off him - he's grounded.", day: "Dimarts" },
+  { id: "dm31", cat: "La Lynda i la Lilian gaudeixen d'un passeig pel festival Loxfest.", eng: "Lynda and Lilian enjoy a wander around Loxfest.", day: "Dimarts" },
+
+  // DIVENDRES (38)
+  { id: "dv1", cat: "La Lynda i la Lilian planegen deixar anar algunes indirectes sobre canviar el nom.", eng: "Lynda and Lilian plan to drop a few hints about changing the name.", day: "Divendres" },
+  { id: "dv2", cat: "A l'agent Burns li entusiasma tirar endavant amb la Fallon.", eng: "PC Burns is keen to keep things going with Fallon.", day: "Divendres" },
+  { id: "dv3", cat: "Intentava endevinar / predir el futur.", eng: "He was trying to second-guess the future.", day: "Divendres" },
+  { id: "dv4", cat: "Aquests problemes són igualment rellevants per als autònoms.", eng: "These issues are equally relevant to the self-employed.", day: "Divendres" },
+  { id: "dv5", cat: "No puc pensar amb claredat!", eng: "I can't think straight!", day: "Divendres" },
+  { id: "dv6", cat: "Potser voldràs agafar una agulla de cap a la camisa per recordar-te amb quin pit començar a la propera presa.", eng: "You may want to attach a safety pin to your shirt to remind yourself which breast to start with at the next feeding.", day: "Divendres" },
+  { id: "dv7", cat: "Les gallines han de rebre part de la seva ració en gra sencer, escampat a terra del galliner.", eng: "Hens are to have a part of their ration as whole grain, spread on the ground in the hen house or run.", day: "Divendres" },
+  { id: "dv8", cat: "Compro i venc accions.", eng: "I buy/sell stocks", day: "Divendres" },
+  { id: "dv9", cat: "Aprenen a reconèixer conceptes de barata, moneda i tipus de canvi.", eng: "They learn to recognize concepts of barter, currency and exchange rates.", day: "Divendres" },
+  { id: "dv10", cat: "Entre les sorpreses que va aportar la investigació hi ha rastres de fins a 60 grans pedres o pilars.", eng: "Among the surprises yielded by the research are traces of up to 60 huge stones or pillars.", day: "Divendres" },
+  { id: "dv11", cat: "Ni en Henry ni en Chris volen anar a la platja.", eng: "Neither Henry nor Chris want to go to the beach.", day: "Divendres" },
+  { id: "dv12", cat: "O esperem que pari de ploure o hem de canviar de plans.", eng: "Either we wait for the rain to stop or we must change our plans.", day: "Divendres" },
+  { id: "dv13", cat: "Què significa cedir el pas en el trànsit?", eng: "What does yielding in traffic mean?", day: "Divendres" },
+  { id: "dv14", cat: "...la construcció megalítica de la qual és tan desconcertant com les gegantines Piràmides d'Egipte.", eng: "...whose megalithic construction is as baffling as the gigantic Egyptian Pyramids.", day: "Divendres" },
+  { id: "dv15", cat: "El presumpte autor de la història.", eng: "The purported author of the story.", day: "Divendres" },
+  { id: "dv16", cat: "No se li va informat del seu dret a reunir-se amb un advocat.", eng: "He was not informed of his right to meet with an attorney.", day: "Divendres" },
+  { id: "dv17", cat: "Posa les galetes a les safates de forn i enforna-les durant deu minuts.", eng: "Put the cookies on the cookie sheets and bake them for ten minutes.", day: "Divendres" },
+  { id: "dv18", cat: "El forner fa servir un morter per moldre el blat.", eng: "The baker uses a pestle and mortar to grind up the wheat.", day: "Divendres" },
+  { id: "dv19", cat: "Cap dels dos estudiants va estudiar gaire.", eng: "Neither of the students studied very hard.", day: "Divendres" },
+  { id: "dv20", cat: "En esports individuals així com en els col·lectius.", eng: "In individual sports as well as collective ones.", day: "Divendres" },
+  { id: "dv21", cat: "Va avançar un altre cotxe en línia contínua i gairebé causa un accident.", eng: "He overtook / passed another car in a no-passing zone and almost caused an accident.", day: "Divendres" },
+  { id: "dv22", cat: "Els punts suspensius mostren on s'ha omès intencionadament una paraula.", eng: "The three dots in a printed text that show where one or more words have been intentionally left out is called ellipsis.", day: "Divendres" },
+  { id: "dv23", cat: "Qualsevol dels meus dos ajudants ho pot fer. A quin prefereixes?", eng: "Either of my assistants can do it. Who do you prefer?", day: "Divendres" },
+  { id: "dv24", cat: "Estava indecisa entre quedar-se o anar-se'n.", eng: "She was torn between staying and going.", day: "Divendres" },
+  { id: "dv25", cat: "Durant l'MBA escolliràs entre deu i dotze assignatures optatives.", eng: "During the MBA you will choose ten to twelve electives from a large and varied portfolio.", day: "Divendres" },
+  { id: "dv26", cat: "El nombre total de persones matriculades.", eng: "The total number of people enrolled.", day: "Divendres" },
+  { id: "dv27", cat: "En Greg no pot menjar peix perquè és al·lèrgic i jo tampoc.", eng: "Greg can't eat fish because he is allergic (and neither can I/I can't either).", day: "Divendres" },
+  { id: "dv28", cat: "Odio fer cua, especialment als aeroports.", eng: "I hate standing in lines (queues), especially at airports.", day: "Divendres" },
+  { id: "dv29", cat: "Aquest acord va ser redactat i verificat per un notari.", eng: "This agreement was drawn up and verified by a notary.", day: "Divendres" },
+  { id: "dv30", cat: "El tren anava ple de gom a gom de viatgers que anaven a la feina.", eng: "The train was packed with commuters.", day: "Divendres" },
+  { id: "dv31", cat: "Afegeix una mica de brou de pollastre i deixa bullir la sopa a foc lent durant vint minuts.", eng: "Add some chicken stock and let the soup simmer for twenty minutes.", day: "Divendres" },
+  { id: "dv32", cat: "Em vaig haver de pessigar quan em van dir que havia guanyat el concurs.", eng: "I had to pinch myself when they told me I'd won the competition.", day: "Divendres" },
+  { id: "dv33", cat: "Ella exposa amb tota claredat per què no poden estar junts.", eng: "She spells out why they can't be together.", day: "Divendres" },
+  { id: "dv34", cat: "Diu que els diners extres seran molt útils per aconseguir el seu propi lloc.", eng: "But he says the extra cash will be handy in helping them secure their own place.", day: "Divendres" },
+  { id: "dv35", cat: "L'Ed i el seu tractor van en ajuda d'en Charlie al voral de la carretera.", eng: "Ed and his tractor come to Charlie's aid at the roadside, towing Charlie's broken-down car back to the Estate.", day: "Divendres" },
+  { id: "dv36", cat: "La Jennifer es preocupa pel que dirà la gent, però en Brian fa veure que està molt tranquil.", eng: "Jennifer worries what people will think but Brian plays it very calm.", day: "Divendres" },
+  { id: "dv37", cat: "L'Emma xafardeja sobre l'arrest d'en Wayne.", eng: "Emma gossips about Wayne getting arrested.", day: "Divendres" },
+  { id: "dv38", cat: "Va tornar a casa ple de desconsol, convençut que tot havia anat malament.", eng: "He returned home full of woe, convinced that everything had gone wrong.", day: "Divendres" }
+];
+
+// Helper: Normalize answer string
+function cleanStr(s) {
+  return (s || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, "")
+    .replace(/\s+/g, ' ');
+}
+
+function checkVerbMatch(userVal, correctVal, altVal) {
+  if (!userVal) return false;
+  const cleanUser = userVal.toLowerCase().trim();
+  const cleanCorrect = (correctVal || "").toLowerCase().trim();
+  const cleanAlt = (altVal || "").toLowerCase().trim();
+  return cleanUser === cleanCorrect || (cleanAlt && cleanUser === cleanAlt);
+}
+
+// STRICT CATALAN MEANING VALIDATION
+function checkMeaningMatch(userVal, meaningStr) {
+  if (!userVal || !meaningStr) return false;
+  const u = cleanStr(userVal);
+  if (!u || u.length < 2) return false;
+  const parts = meaningStr.split(/[,/]/).map(cleanStr);
+  return parts.some(p => p === u);
+}
+
+// --- MAIN APP SHELL ---
+function App({ session, userEmail, onLogout }) {
+  const [currentTab, setCurrentTab] = useState('home'); // 'home' | 'verbs' | 'vocab'
+  const [streak, setStreak] = useState(1);
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashProgress, setSplashProgress] = useState(0);
+
+  // Splash Screen Timer & Progress Animation
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSplashProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(timer);
+          setTimeout(() => setShowSplash(false), 300);
+          return 100;
+        }
+        return prev + 12;
+      });
+    }, 110);
+    return () => clearInterval(timer);
+  }, []);
+
+  const dismissSplash = () => {
+    setSplashProgress(100);
+    setShowSplash(false);
+  };
+
+  useEffect(() => {
+    try {
+      const savedStreak = localStorage.getItem('esh_streak');
+      const lastDate = localStorage.getItem('esh_last_date');
+      const today = new Date().toDateString();
+
+      if (savedStreak && lastDate) {
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        if (lastDate === today) {
+          setStreak(parseInt(savedStreak, 10));
+        } else if (lastDate === yesterday) {
+          setStreak(parseInt(savedStreak, 10));
+        } else {
+          setStreak(1);
+          localStorage.setItem('esh_streak', '1');
+          localStorage.setItem('esh_last_date', today);
+        }
+      } else {
+        setStreak(1);
+        localStorage.setItem('esh_streak', '1');
+        localStorage.setItem('esh_last_date', today);
+      }
+    } catch (e) {
+      setStreak(1);
+    }
+  }, []);
+
+  const incrementStreak = () => {
+    const today = new Date().toDateString();
+    const lastDate = localStorage.getItem('esh_last_date');
+    if (lastDate !== today) {
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      localStorage.setItem('esh_streak', newStreak.toString());
+      localStorage.setItem('esh_last_date', today);
+      if (window.confetti) {
+        window.confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative overflow-x-hidden">
+      
+      {/* SPECTACULAR SPLASH SCREEN OVERLAY */}
+      <div 
+        className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-[#001733] via-[#002147] to-[#041226] text-white transition-all duration-700 ${
+          showSplash ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'
+        }`}
+      >
+        <div className="flex flex-col items-center max-w-sm px-6 text-center">
+          {/* Logo with pulsing golden aura */}
+          <div className="relative mb-6">
+            <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-amber-400/80 bg-white p-1 shadow-2xl splash-glow-ring flex items-center justify-center">
+              <img 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuANdXRXZBg9cU1j_sfQ2wF0gfNyU-WjnrBPhwFOdnBtWPJBAgmO-GHhe0RVI59drNLxSn5I_ExV80sfuqPeWqh7JCvAqSwdlaQ7HdsDMYpS111Dce5dA21_LpwJtyKyqCpJJ3oAQJfJDwP99ZkShKr9_sTB-SG3a98quS72SacRrUQT_wSQc4LZfrGx_aYO2vYhHcJPjFM8UQh1IYtiUZxQXrojerqzLEghEdm00pSiS9aBGxFsr-C9eg" 
+                alt="JP English Hub Emblem" 
+                className="w-full h-full object-cover rounded-full"
+              />
+            </div>
+            <span className="absolute -bottom-1 -right-1 bg-crimson-700 text-white font-mono text-[11px] font-bold px-2 py-0.5 rounded-full border border-white/30 shadow-md">
+              PAU
+            </span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-serif-academic font-bold tracking-wide text-white">
+            JP ENGLISH HUB
+          </h1>
+          <p className="text-xs uppercase tracking-widest text-amber-300 font-mono font-semibold mt-1">
+            Batxillerat &bull; Oxford Academic Style
+          </p>
+
+          <p className="text-xs text-slate-300 mt-4 leading-relaxed font-sans">
+            Preparació Oficial de Batxillerat i PAU en Català. 162 Verbs Irregulars &bull; 107 Expressions Clau.
+          </p>
+
+          {/* Animated Progress Bar */}
+          <div className="w-64 bg-slate-800/80 rounded-full h-2 mt-8 overflow-hidden border border-white/10 p-[1px]">
+            <div 
+              className="bg-gradient-to-r from-amber-400 via-crimson-600 to-amber-300 h-full rounded-full transition-all duration-200"
+              style={{ width: `${splashProgress}%` }}
+            ></div>
+          </div>
+          <span className="text-[11px] font-mono text-slate-400 mt-2">Carregant recursos acadèmics... {splashProgress}%</span>
+
+          <button
+            onClick={dismissSplash}
+            className="mt-6 px-5 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white tracking-wide transition-all shadow-sm"
+          >
+            Accedir directament &rarr;
+          </button>
+        </div>
+      </div>
+
+      {/* Top Oxford Blue Navigation Bar */}
+      <header className="sticky top-0 z-40 bg-[#002147] text-white shadow-md border-b-2 border-crimson-700">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          
+          {/* Official Logo Integration */}
+          <div 
+            className="flex items-center gap-3 cursor-pointer group" 
+            onClick={() => setCurrentTab('home')}
+          >
+            <div className="w-11 h-11 rounded-full bg-white p-0.5 border border-amber-400/70 shadow-sm group-hover:border-amber-400 group-hover:scale-105 transition-all overflow-hidden flex items-center justify-center shrink-0">
+              <img 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuANdXRXZBg9cU1j_sfQ2wF0gfNyU-WjnrBPhwFOdnBtWPJBAgmO-GHhe0RVI59drNLxSn5I_ExV80sfuqPeWqh7JCvAqSwdlaQ7HdsDMYpS111Dce5dA21_LpwJtyKyqCpJJ3oAQJfJDwP99ZkShKr9_sTB-SG3a98quS72SacRrUQT_wSQc4LZfrGx_aYO2vYhHcJPjFM8UQh1IYtiUZxQXrojerqzLEghEdm00pSiS9aBGxFsr-C9eg" 
+                alt="JP English Hub Crest" 
+                className="w-full h-full object-cover rounded-full"
+              />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-serif-academic font-bold text-base sm:text-lg tracking-wide text-white">
+                  JP ENGLISH HUB
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-crimson-700 text-white tracking-wider">
+                  PAU
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 font-sans hidden sm:block">Batxillerat &bull; Oxford Academic Style</p>
+            </div>
+          </div>
+
+          {/* Navigation Tabs + User & Streak */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <nav className="flex items-center bg-[#062c54] p-1 rounded-lg border border-white/10 text-xs font-semibold">
+              <button
+                onClick={() => setCurrentTab('home')}
+                className={`px-3 py-1.5 rounded transition-all ${
+                  currentTab === 'home' 
+                    ? 'bg-crimson-700 text-white shadow-sm font-bold' 
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Inici
+              </button>
+              <button
+                onClick={() => setCurrentTab('verbs')}
+                className={`px-3 py-1.5 rounded transition-all ${
+                  currentTab === 'verbs' 
+                    ? 'bg-crimson-700 text-white shadow-sm font-bold' 
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Verbs Irregulars
+              </button>
+              <button
+                onClick={() => setCurrentTab('vocab')}
+                className={`px-3 py-1.5 rounded transition-all ${
+                  currentTab === 'vocab' 
+                    ? 'bg-crimson-700 text-white shadow-sm font-bold' 
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Vocabulari & Idioms
+              </button>
+            </nav>
+
+            {/* Academic Streak Counter */}
+            <div 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-400/40 text-amber-300 select-none shadow-sm"
+              title="Ràtxa diària d'estudi continuat"
+            >
+              <span className="text-sm">🔥</span>
+              <span className="font-bold text-xs sm:text-sm font-mono">{streak}</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider hidden md:inline text-amber-200">dies</span>
+            </div>
+
+            {/* Logout Button if session is provided */}
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-crimson-700 border border-white/20 hover:border-crimson-600 text-white text-xs font-semibold tracking-wide transition-all shadow-sm flex items-center gap-1.5"
+                title="Tancar Sessió"
+              >
+                <span className="hidden lg:inline text-[11px] text-slate-300 font-mono max-w-[120px] truncate">{userEmail}</span>
+                <span className="hidden sm:inline">Sortir</span>
+                <span>🚪</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Area with View Transition */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+        <div key={currentTab} className="view-enter">
+          {currentTab === 'home' && <HomeView onNavigate={setCurrentTab} streak={streak} />}
+          {currentTab === 'verbs' && <VerbsTrainer onCompleteAction={incrementStreak} />}
+          {currentTab === 'vocab' && <VocabTrainer session={session} onCompleteAction={incrementStreak} />}
+        </div>
+      </main>
+
+      {/* Academic Light Footer with Official Logo & Developer Credits */}
+      <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-300 bg-white shadow-xs">
+              <img 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuANdXRXZBg9cU1j_sfQ2wF0gfNyU-WjnrBPhwFOdnBtWPJBAgmO-GHhe0RVI59drNLxSn5I_ExV80sfuqPeWqh7JCvAqSwdlaQ7HdsDMYpS111Dce5dA21_LpwJtyKyqCpJJ3oAQJfJDwP99ZkShKr9_sTB-SG3a98quS72SacRrUQT_wSQc4LZfrGx_aYO2vYhHcJPjFM8UQh1IYtiUZxQXrojerqzLEghEdm00pSiS9aBGxFsr-C9eg" 
+                alt="JP Mini Logo" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="font-serif-academic font-bold tracking-wide text-oxford-900">
+              JP ENGLISH HUB &bull; Desenvolupat per <strong className="text-crimson-700 font-bold">JanPick</strong>
+            </span>
+          </div>
+          <span>100% en Català &bull; Preparat per a les proves d'accés a la universitat (PAU)</span>
+          <span className="font-mono text-[11px] text-slate-400">162 Verbs &bull; 107 Expressions</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// --- 1. CLEANED HOME VIEW (NO EMOJIS, SHORTENED DESCRIPTIONS, ELEGANT ACADEMIC BADGES) ---
+function HomeView({ onNavigate, streak }) {
+  return (
+    <div className="space-y-8 max-w-4xl mx-auto">
+      {/* Welcome Banner Card with Logo Emblem */}
+      <div className="rounded-xl bg-white border border-slate-200/90 p-6 sm:p-8 relative shadow-sm hover:shadow-md transition-shadow">
+        <div className="border-b border-slate-100 pb-5 mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-br from-oxford-900 to-crimson-700 shadow-sm shrink-0 hidden sm:block">
+              <img 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuANdXRXZBg9cU1j_sfQ2wF0gfNyU-WjnrBPhwFOdnBtWPJBAgmO-GHhe0RVI59drNLxSn5I_ExV80sfuqPeWqh7JCvAqSwdlaQ7HdsDMYpS111Dce5dA21_LpwJtyKyqCpJJ3oAQJfJDwP99ZkShKr9_sTB-SG3a98quS72SacRrUQT_wSQc4LZfrGx_aYO2vYhHcJPjFM8UQh1IYtiUZxQXrojerqzLEghEdm00pSiS9aBGxFsr-C9eg" 
+                alt="Badge JP" 
+                className="w-full h-full object-cover rounded-full bg-white"
+              />
+            </div>
+            <div>
+              <span className="text-xs uppercase font-mono tracking-widest text-crimson-700 font-bold bg-crimson-50 px-2 py-0.5 rounded border border-crimson-100">
+                Pla de Treball Oficial
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-serif-academic font-bold text-oxford-950 mt-1.5">
+                Preparació Lingüística Batxillerat
+              </h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-lg self-start sm:self-auto font-mono text-xs text-amber-800 font-semibold shadow-xs">
+            <span>Ràtxa activa: <strong>{streak} dies</strong></span>
+          </div>
+        </div>
+
+        <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
+          Entrenament d'alta retenció dissenyat amb el rigor acadèmic d'Oxford i Cambridge. Automatització de les formes verbals irregulars amb validació en temps real i consolidació activa d'expressions clau de Batxillerat i PAU.
+        </p>
+
+        {/* Quick Metrics Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-100 text-xs">
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/80">
+            <span className="text-slate-500 block font-mono text-[11px]">Verbs Irregulars</span>
+            <span className="text-xl font-bold text-oxford-900 font-serif-academic mt-0.5 block">162</span>
+          </div>
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/80">
+            <span className="text-slate-500 block font-mono text-[11px]">Patrons Morfològics</span>
+            <span className="text-xl font-bold text-oxford-900 font-serif-academic mt-0.5 block">4 Grups</span>
+          </div>
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/80">
+            <span className="text-slate-500 block font-mono text-[11px]">Expressions &amp; Idioms</span>
+            <span className="text-xl font-bold text-oxford-900 font-serif-academic mt-0.5 block">107</span>
+          </div>
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/80">
+            <span className="text-slate-500 block font-mono text-[11px]">Alineació Exàmens</span>
+            <span className="text-xl font-bold text-crimson-700 font-serif-academic mt-0.5 block">PAU 100%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Module Selection Cards: Cleaned, Emojis Removed, Academic Badges Added */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* Module 1: Verbs */}
+        <div 
+          onClick={() => onNavigate('verbs')}
+          className="group rounded-xl bg-white border border-slate-200/90 p-6 sm:p-7 shadow-sm hover:shadow-md hover:border-oxford-300 transition-all cursor-pointer flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[11px] font-mono font-bold tracking-wider uppercase px-2.5 py-1 rounded bg-oxford-50 text-oxford-900 border border-oxford-200">
+                Mòdul 1 | Hyper-Flow
+              </span>
+              <span className="text-xs font-mono font-semibold text-slate-400">162 verbs</span>
+            </div>
+            <h2 className="text-xl font-serif-academic font-bold text-oxford-950 group-hover:text-oxford-700 transition-colors">
+              Verbs Irregulars
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+              Pràctica contínua amb flux ràpid de teclat, validació automàtica i patrons morfològics AAA, ABA, ABB i ABC.
+            </p>
+          </div>
+          <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-oxford-900 group-hover:text-crimson-700 transition-colors">
+            <span>Iniciar Entrenament</span>
+            <span className="font-mono text-sm group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </div>
+        </div>
+
+        {/* Module 2: Vocabulary & Idioms */}
+        <div 
+          onClick={() => onNavigate('vocab')}
+          className="group rounded-xl bg-white border border-slate-200/90 p-6 sm:p-7 shadow-sm hover:shadow-md hover:border-crimson-300 transition-all cursor-pointer flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[11px] font-mono font-bold tracking-wider uppercase px-2.5 py-1 rounded bg-crimson-50 text-crimson-800 border border-crimson-200">
+                Mòdul 2 | Active Recall
+              </span>
+              <span className="text-xs font-mono font-semibold text-slate-400">107 expressions</span>
+            </div>
+            <h2 className="text-xl font-serif-academic font-bold text-oxford-950 group-hover:text-crimson-700 transition-colors">
+              Vocabulari &amp; Idioms
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+              Flashcards tridimensionals per a la memorització activa de frases complexes i expressions formals de PAU.
+            </p>
+          </div>
+          <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-oxford-900 group-hover:text-crimson-700 transition-colors">
+            <span>Repassar Targetes</span>
+            <span className="font-mono text-sm group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// --- 2. RESTORED VERBS TRAINER (VERTICAL SCROLLING LIST RENDERING filteredVerbs.map(...) WITH HYPER-FLOW & LOCALSTORAGE PERSISTENCE) ---
+function VerbsTrainer({ onCompleteAction }) {
+  const [selectedGroup, setSelectedGroup] = useState('ALL'); // 'ALL' | 'AAA' | 'ABA' | 'ABB' | 'ABC'
+  const [mode, setMode] = useState('fill'); // 'fill' | 'trans'
+  const [direction, setDirection] = useState('eng_to_cat'); // 'eng_to_cat' | 'cat_to_eng'
+  const [verbsList, setVerbsList] = useState(VERBS_DATA);
+  
+  // Persistent inputs state from localStorage
+  const [inputs, setInputs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('esh_verbs_answers');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  // Persistent revealed state from localStorage
+  const [revealed, setRevealed] = useState(() => {
+    try {
+      const saved = localStorage.getItem('esh_verbs_revealed');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const pastRefs = useRef({});
+  const partRefs = useRef({});
+  const meaningRefs = useRef({});
+
+  // Sync inputs to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('esh_verbs_answers', JSON.stringify(inputs));
+    } catch (e) {
+      console.error('Error saving verbs answers to localStorage', e);
+    }
+  }, [inputs]);
+
+  // Sync revealed to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('esh_verbs_revealed', JSON.stringify(revealed));
+    } catch (e) {
+      console.error('Error saving verbs revealed to localStorage', e);
+    }
+  }, [revealed]);
+
+  // Filtered List based on morphological group
+  const filteredVerbs = useMemo(() => {
+    if (selectedGroup === 'ALL') return verbsList;
+    return verbsList.filter(v => v.type === selectedGroup);
+  }, [verbsList, selectedGroup]);
+
+  // Restart inputs, revealed answers and localStorage
+  const handleReset = () => {
+    if (window.confirm("Vols reiniciar tots els camps i esborrar el progrés guardat dels verbs?")) {
+      setInputs({});
+      setRevealed({});
+      try {
+        localStorage.removeItem('esh_verbs_answers');
+        localStorage.removeItem('esh_verbs_revealed');
+      } catch (e) {}
+    }
+  };
+
+  // Shuffle the verbs array
+  const handleShuffle = () => {
+    const shuffled = [...verbsList].sort(() => Math.random() - 0.5);
+    setVerbsList(shuffled);
+  };
+
+  // HYPER-FLOW KEYBOARD AUTO-FOCUS HANDLERS
+  const handlePastChange = (verbId, val, verbObj, index) => {
+    setInputs(prev => ({
+      ...prev,
+      [verbId]: { ...(prev[verbId] || {}), past: val }
+    }));
+
+    // If past input is correct, immediately auto-focus participle input of the SAME verb
+    if (checkVerbMatch(val, verbObj.past, verbObj.altPast)) {
+      if (partRefs.current[verbId]) {
+        partRefs.current[verbId].focus();
+      }
+    }
+  };
+
+  const handlePartChange = (verbId, val, verbObj, index) => {
+    setInputs(prev => ({
+      ...prev,
+      [verbId]: { ...(prev[verbId] || {}), part: val }
+    }));
+
+    // If participle input is correct, immediately auto-focus past input of the NEXT verb in vertical list
+    if (checkVerbMatch(val, verbObj.part, verbObj.altPart)) {
+      const nextVerb = filteredVerbs[index + 1];
+      if (nextVerb && pastRefs.current[nextVerb.id]) {
+        pastRefs.current[nextVerb.id].focus();
+      }
+      if (onCompleteAction) onCompleteAction();
+    }
+  };
+
+  const handleMeaningChange = (verbId, val, verbObj, index) => {
+    setInputs(prev => ({
+      ...prev,
+      [verbId]: { ...(prev[verbId] || {}), meaning: val }
+    }));
+
+    // Auto-focus next verb if meaning matches
+    const isCorrect = direction === 'eng_to_cat' 
+      ? checkMeaningMatch(val, verbObj.cat)
+      : checkVerbMatch(val, verbObj.inf);
+
+    if (isCorrect) {
+      const nextVerb = filteredVerbs[index + 1];
+      if (nextVerb && meaningRefs.current[nextVerb.id]) {
+        meaningRefs.current[nextVerb.id].focus();
+      }
+      if (onCompleteAction) onCompleteAction();
+    }
+  };
+
+  const toggleReveal = (verbId) => {
+    setRevealed(prev => ({ ...prev, [verbId]: !prev[verbId] }));
+  };
+
+  return (
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Top Header & Academic Controls */}
+      <div className="rounded-xl bg-white border border-slate-200/90 p-5 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <span className="text-[11px] font-mono font-bold tracking-wider text-crimson-700 uppercase bg-crimson-50 px-2 py-0.5 rounded border border-crimson-100">
+              Llista Vertical Completa
+            </span>
+            <h1 className="text-xl sm:text-2xl font-serif-academic font-bold text-oxford-950 mt-1">
+              Entrenador de Verbs Irregulars
+            </h1>
+          </div>
+
+          {/* Action Buttons: Reiniciar & Barrejar */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleReset}
+              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold tracking-wide border border-slate-200 transition-all flex items-center gap-1.5"
+              title="Reiniciar els camps completats i netejar la memòria"
+            >
+              <span>🔄</span> Reiniciar
+            </button>
+            <button
+              onClick={handleShuffle}
+              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold tracking-wide border border-slate-200 transition-all flex items-center gap-1.5"
+              title="Barrejar l'ordre dels verbs"
+            >
+              <span>🔀</span> Barrejar
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Toolbar: Morphological Groups & Study Modes */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs">
+          
+          {/* Morphological Group Tabs */}
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg border border-slate-200/80">
+            {['ALL', 'AAA', 'ABA', 'ABB', 'ABC'].map(grp => (
+              <button
+                key={grp}
+                onClick={() => setSelectedGroup(grp)}
+                className={`px-3 py-1.5 rounded font-mono font-bold transition-all ${
+                  selectedGroup === grp 
+                    ? 'bg-oxford-900 text-white shadow-xs' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {grp === 'ALL' ? 'Tots (162)' : grp}
+              </button>
+            ))}
+          </div>
+
+          {/* Mode Switcher: Emplenar vs Traducció */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200/80 font-semibold">
+              <button
+                onClick={() => setMode('fill')}
+                className={`px-3 py-1.5 rounded transition-all ${
+                  mode === 'fill' 
+                    ? 'bg-crimson-700 text-white shadow-xs' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Formes (Past &amp; Part)
+              </button>
+              <button
+                onClick={() => setMode('trans')}
+                className={`px-3 py-1.5 rounded transition-all ${
+                  mode === 'trans' 
+                    ? 'bg-crimson-700 text-white shadow-xs' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Traducció
+              </button>
+            </div>
+
+            {/* If translation mode, direction toggle */}
+            {mode === 'trans' && (
+              <button
+                onClick={() => setDirection(d => d === 'eng_to_cat' ? 'cat_to_eng' : 'eng_to_cat')}
+                className="px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 font-mono text-[11px] font-bold hover:bg-amber-100 transition-all"
+              >
+                {direction === 'eng_to_cat' ? 'Anglès ➔ Català' : 'Català ➔ Anglès'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* VERTICAL SCROLLING LIST RENDERING filteredVerbs.map(...) */}
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden">
+        
+        {/* Table Column Headers */}
+        <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-200 px-4 py-3 text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500">
+          <div className="col-span-1">#</div>
+          <div className="col-span-3 sm:col-span-3">Infinitiu</div>
+          {mode === 'fill' ? (
+            <>
+              <div className="col-span-3">Past Simple</div>
+              <div className="col-span-3">Past Participle</div>
+              <div className="col-span-2 text-right">Significat</div>
+            </>
+          ) : (
+            <>
+              <div className="col-span-6">
+                {direction === 'eng_to_cat' ? 'Traducció al Català' : 'Infinitiu en Anglès'}
+              </div>
+              <div className="col-span-2 text-right">Solució</div>
+            </>
+          )}
+        </div>
+
+        {/* Vertical List of Verbs */}
+        <div className="divide-y divide-slate-100 max-h-[680px] overflow-y-auto">
+          {filteredVerbs.map((verb, idx) => {
+            const verbInputs = inputs[verb.id] || {};
+            const isPastCorrect = checkVerbMatch(verbInputs.past, verb.past, verb.altPast);
+            const isPartCorrect = checkVerbMatch(verbInputs.part, verb.part, verb.altPart);
+            const isMeaningCorrect = direction === 'eng_to_cat'
+              ? checkMeaningMatch(verbInputs.meaning, verb.cat)
+              : checkVerbMatch(verbInputs.meaning, verb.inf);
+            const isRev = revealed[verb.id];
+
+            return (
+              <div 
+                key={verb.id} 
+                className="grid grid-cols-12 items-center px-4 py-3 hover:bg-slate-50/70 transition-colors gap-2 text-sm"
+              >
+                {/* Index / Type */}
+                <div className="col-span-1 font-mono text-xs text-slate-400">
+                  {idx + 1}
+                </div>
+
+                {/* Infinitive or Prompt */}
+                <div className="col-span-3 sm:col-span-3 flex flex-col">
+                  <span className="font-bold text-oxford-950 font-serif-academic text-base">
+                    {mode === 'trans' && direction === 'cat_to_eng' ? verb.cat : verb.inf}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400 uppercase">
+                    Grup {verb.type}
+                  </span>
+                </div>
+
+                {/* Fill Mode: Past & Part Inputs with Hyper-Flow Focus */}
+                {mode === 'fill' ? (
+                  <>
+                    <div className="col-span-3">
+                      <input
+                        ref={el => pastRefs.current[verb.id] = el}
+                        type="text"
+                        value={verbInputs.past || ''}
+                        onChange={e => handlePastChange(verb.id, e.target.value, verb, idx)}
+                        placeholder={isRev ? (verb.altPast ? `${verb.past} / ${verb.altPast}` : verb.past) : 'past simple...'}
+                        className={`w-full px-3 py-1.5 rounded-lg border text-xs sm:text-sm font-mono transition-all focus:outline-none focus:ring-1 ${
+                          isPastCorrect 
+                            ? 'bg-emerald-50 border-emerald-400 text-emerald-900 focus:ring-emerald-500 font-bold' 
+                            : 'bg-white border-slate-300 text-slate-800 focus:border-oxford-700 focus:ring-oxford-700'
+                        }`}
+                      />
+                    </div>
+
+                    <div className="col-span-3">
+                      <input
+                        ref={el => partRefs.current[verb.id] = el}
+                        type="text"
+                        value={verbInputs.part || ''}
+                        onChange={e => handlePartChange(verb.id, e.target.value, verb, idx)}
+                        placeholder={isRev ? (verb.altPart ? `${verb.part} / ${verb.altPart}` : verb.part) : 'past participle...'}
+                        className={`w-full px-3 py-1.5 rounded-lg border text-xs sm:text-sm font-mono transition-all focus:outline-none focus:ring-1 ${
+                          isPartCorrect 
+                            ? 'bg-emerald-50 border-emerald-400 text-emerald-900 focus:ring-emerald-500 font-bold' 
+                            : 'bg-white border-slate-300 text-slate-800 focus:border-oxford-700 focus:ring-oxford-700'
+                        }`}
+                      />
+                    </div>
+
+                    {/* Catalan Meaning Display */}
+                    <div className="col-span-2 text-right">
+                      <span className="text-xs text-slate-600 block truncate" title={verb.cat}>
+                        {verb.cat}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  /* Translation Mode Input */
+                  <>
+                    <div className="col-span-6">
+                      <input
+                        ref={el => meaningRefs.current[verb.id] = el}
+                        type="text"
+                        value={verbInputs.meaning || ''}
+                        onChange={e => handleMeaningChange(verb.id, e.target.value, verb, idx)}
+                        placeholder={
+                          isRev 
+                            ? (direction === 'eng_to_cat' ? verb.cat : verb.inf) 
+                            : (direction === 'eng_to_cat' ? 'Escriu el significat...' : 'Escriu l\'infinitiu...')
+                        }
+                        className={`w-full px-3 py-1.5 rounded-lg border text-xs sm:text-sm font-mono transition-all focus:outline-none focus:ring-1 ${
+                          isMeaningCorrect 
+                            ? 'bg-emerald-50 border-emerald-400 text-emerald-900 focus:ring-emerald-500 font-bold' 
+                            : 'bg-white border-slate-300 text-slate-800 focus:border-oxford-700 focus:ring-oxford-700'
+                        }`}
+                      />
+                    </div>
+
+                    <div className="col-span-2 text-right">
+                      <button
+                        onClick={() => toggleReveal(verb.id)}
+                        className="text-[11px] font-mono text-slate-400 hover:text-oxford-800 underline transition-colors"
+                      >
+                        {isRev ? 'Ocultar' : 'Pista'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer of the vertical list */}
+        <div className="bg-slate-50 border-t border-slate-200 px-4 py-3 flex items-center justify-between text-xs text-slate-500 font-mono">
+          <span>Mostrant {filteredVerbs.length} verbs irregulars</span>
+          <span>Hyper-Flow: Salt automàtic en encertar la forma correcta</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- 3. VOCABULARY TRAINER WITH LOCALSTORAGE PERSISTENCE BY DAY & RESET BUTTON ---
+function VocabTrainer({ session, onCompleteAction }) {
+  const [selectedDay, setSelectedDay] = useState('Dilluns'); // 'Dilluns' | 'Dimarts' | 'Divendres'
+  const [direction, setDirection] = useState('eng_to_cat'); // 'eng_to_cat' | 'cat_to_eng'
+  
+  // State partitions loaded from localStorage per day
+  const [queue, setQueue] = useState([]);
+  const [mastered, setMastered] = useState([]);
+  const [historyStack, setHistoryStack] = useState([]);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(''); // 'saving' | 'saved' | 'error'
+
+  // Load state from localStorage on day change or initialize with defaults
+  useEffect(() => {
+    try {
+      const savedQueue = localStorage.getItem(`esh_vocab_queue_${selectedDay}`);
+      const savedMastered = localStorage.getItem(`esh_vocab_mastered_${selectedDay}`);
+      const savedHistory = localStorage.getItem(`esh_vocab_history_${selectedDay}`);
+
+      const defaultDayItems = VOCAB_DATA.filter(item => item.day === selectedDay);
+
+      if (savedQueue !== null && savedMastered !== null) {
+        setQueue(JSON.parse(savedQueue));
+        setMastered(JSON.parse(savedMastered));
+        setHistoryStack(savedHistory ? JSON.parse(savedHistory) : []);
+      } else {
+        setQueue(defaultDayItems);
+        setMastered([]);
+        setHistoryStack([]);
+      }
+    } catch (e) {
+      const defaultDayItems = VOCAB_DATA.filter(item => item.day === selectedDay);
+      setQueue(defaultDayItems);
+      setMastered([]);
+      setHistoryStack([]);
+    }
+    setIsFlipped(false);
+  }, [selectedDay]);
+
+  // Sync state to localStorage whenever queue, mastered or historyStack change
+  useEffect(() => {
+    try {
+      localStorage.setItem(`esh_vocab_queue_${selectedDay}`, JSON.stringify(queue));
+      localStorage.setItem(`esh_vocab_mastered_${selectedDay}`, JSON.stringify(mastered));
+      localStorage.setItem(`esh_vocab_history_${selectedDay}`, JSON.stringify(historyStack));
+    } catch (e) {
+      console.error('Error saving vocab progress to localStorage', e);
+    }
+  }, [queue, mastered, historyStack, selectedDay]);
+
+  const currentCard = queue[0] || null;
+
+  // RESET BUTTON LOGIC FOR VOCABTRAINER (WIPES LOCALSTORAGE FOR SELECTED DAY)
+  const handleResetSession = () => {
+    if (window.confirm("Vols reiniciar la sessió d'estudi del dia seleccionat? S'esborrarà el progrés d'aquesta ronda.")) {
+      const dayItems = VOCAB_DATA.filter(item => item.day === selectedDay);
+      setQueue(dayItems);
+      setMastered([]);
+      setHistoryStack([]);
+      setIsFlipped(false);
+      try {
+        localStorage.removeItem(`esh_vocab_queue_${selectedDay}`);
+        localStorage.removeItem(`esh_vocab_mastered_${selectedDay}`);
+        localStorage.removeItem(`esh_vocab_history_${selectedDay}`);
+      } catch (e) {}
+    }
+  };
+
+  // SUPABASE DATABASE LOGIC INSIDE handleHard (STRICTLY PRESERVED)
+  const handleHard = async () => {
+    if (!currentCard) return;
+
+    // Supabase mistake recording
+    if (supabaseClient && session?.user?.id) {
+      setSyncStatus('saving');
+      try {
+        const userId = session.user.id;
+        const wordId = String(currentCard.id);
+
+        // Check if existing record
+        const { data, error: selectError } = await supabaseClient
+          .from('user_mistakes')
+          .select('mistake_count')
+          .eq('user_id', userId)
+          .eq('word_id', wordId)
+          .maybeSingle();
+
+        if (selectError) throw selectError;
+
+        if (data) {
+          const { error: updateError } = await supabaseClient
+            .from('user_mistakes')
+            .update({ mistake_count: (data.mistake_count || 1) + 1 })
+            .eq('user_id', userId)
+            .eq('word_id', wordId);
+          if (updateError) throw updateError;
+        } else {
+          const { error: insertError } = await supabaseClient
+            .from('user_mistakes')
+            .insert({ user_id: userId, word_id: wordId, mistake_count: 1 });
+          if (insertError) throw insertError;
+        }
+        setSyncStatus('saved');
+        setTimeout(() => setSyncStatus(''), 2000);
+      } catch (err) {
+        console.error('Error recording mistake to Supabase:', err);
+        setSyncStatus('error');
+        setTimeout(() => setSyncStatus(''), 3000);
+      }
+    }
+
+    // Local queue handling: push to back of queue
+    setHistoryStack(prev => [...prev, { card: currentCard, action: 'hard' }]);
+    setIsFlipped(false);
+    setQueue(prev => {
+      const rest = prev.slice(1);
+      return [...rest, currentCard];
+    });
+  };
+
+  const handleEasy = () => {
+    if (!currentCard) return;
+    setHistoryStack(prev => [...prev, { card: currentCard, action: 'easy' }]);
+    setIsFlipped(false);
+    setMastered(prev => [...prev, currentCard]);
+    setQueue(prev => prev.slice(1));
+    if (onCompleteAction) onCompleteAction();
+  };
+
+  const handleUndo = () => {
+    if (historyStack.length === 0) return;
+    const last = historyStack[historyStack.length - 1];
+    setHistoryStack(prev => prev.slice(0, prev.length - 1));
+    setIsFlipped(false);
+
+    if (last.action === 'easy') {
+      setMastered(prev => prev.filter(c => c.id !== last.card.id));
+      setQueue(prev => [last.card, ...prev]);
+    } else {
+      // It was pushed to the end, restore to front
+      setQueue(prev => {
+        const without = prev.filter(c => c.id !== last.card.id);
+        return [last.card, ...without];
+      });
+    }
+  };
+
+  // Keyboard shortcut listener (Space = Flip, 1 = Hard, 2 = Easy)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setIsFlipped(f => !f);
+      } else if (e.key === '1') {
+        e.preventDefault();
+        handleHard();
+      } else if (e.key === '2') {
+        e.preventDefault();
+        handleEasy();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentCard, isFlipped, historyStack]);
+
+  const total = queue.length + mastered.length;
+  const progressPercent = total > 0 ? Math.round((mastered.length / total) * 100) : 100;
+
+  return (
+    <div className="space-y-6 max-w-2xl mx-auto">
+      {/* Top Header Card */}
+      <div className="rounded-xl bg-white border border-slate-200/90 p-5 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <span className="text-[11px] font-mono font-bold tracking-wider text-crimson-700 uppercase bg-crimson-50 px-2 py-0.5 rounded border border-crimson-100">
+              Safe Active Recall 3D
+            </span>
+            <h1 className="text-xl sm:text-2xl font-serif-academic font-bold text-oxford-950 mt-1">
+              Vocabulari &amp; Expressions Clau
+            </h1>
+          </div>
+
+          {/* Day Selector */}
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg border border-slate-200/80 text-xs font-semibold">
+            {['Dilluns', 'Dimarts', 'Divendres'].map(day => (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(day)}
+                className={`px-3 py-1.5 rounded transition-all ${
+                  selectedDay === day 
+                    ? 'bg-oxford-900 text-white shadow-xs font-bold' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Secondary Toolbar: Direction Toggle, Desfer & Reset Button */}
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDirection(d => d === 'eng_to_cat' ? 'cat_to_eng' : 'eng_to_cat')}
+              className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 font-mono text-[11px] font-bold hover:bg-amber-100 transition-all"
+            >
+              {direction === 'eng_to_cat' ? 'Anglès ➔ Català' : 'Català ➔ Anglès'}
+            </button>
+
+            {/* Supabase sync indicator */}
+            {syncStatus === 'saving' && (
+              <span className="text-[11px] text-amber-600 font-mono flex items-center gap-1">
+                <span className="animate-spin">🔄</span> Guardant error...
+              </span>
+            )}
+            {syncStatus === 'saved' && (
+              <span className="text-[11px] text-emerald-600 font-mono font-bold flex items-center gap-1">
+                ✓ Error sincronitzat a Supabase
+              </span>
+            )}
+          </div>
+
+          {/* Action Buttons: Desfer and Reset Sessió */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleUndo}
+              disabled={historyStack.length === 0}
+              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-semibold transition-all disabled:opacity-40 disabled:pointer-events-none"
+              title="Desfer la darrera acció"
+            >
+              Desfer
+            </button>
+
+            {/* RESET BUTTON NEXT TO DESFER */}
+            <button
+              onClick={handleResetSession}
+              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-semibold transition-all flex items-center gap-1.5"
+              title="Reiniciar la sessió d'aquest dia"
+            >
+              <span>🔄</span> Reiniciar Sessió
+            </button>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-1.5 pt-1">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-500">
+            <span>Memoritzades: <strong>{mastered.length}</strong> / {total}</span>
+            <span>{progressPercent}% completat</span>
+          </div>
+          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200/80">
+            <div 
+              className="bg-gradient-to-r from-oxford-800 to-crimson-700 h-full rounded-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3D Interactive Flashcard */}
+      {currentCard ? (
+        <div className="space-y-6">
+          <div 
+            onClick={() => setIsFlipped(!isFlipped)}
+            className="perspective-container w-full h-80 sm:h-96 cursor-pointer select-none"
+          >
+            <div className={`card-3d-inner shadow-lg hover:shadow-xl transition-shadow ${isFlipped ? 'flipped' : ''}`}>
+              
+              {/* Card Face: FRONT */}
+              <div className="card-face bg-white border-2 border-slate-200/90 p-8 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-slate-400">
+                    {selectedDay} &bull; Pregunta
+                  </span>
+                  <span className="text-[11px] font-mono text-oxford-700 font-semibold bg-oxford-50 px-2 py-0.5 rounded border border-oxford-100">
+                    Clica per girar (Espai)
+                  </span>
+                </div>
+
+                <div className="text-center my-auto px-4">
+                  <h2 className="text-2xl sm:text-3xl font-serif-academic font-bold text-oxford-950 leading-relaxed">
+                    {direction === 'eng_to_cat' ? currentCard.eng : currentCard.cat}
+                  </h2>
+                </div>
+
+                <div className="text-center text-xs text-slate-400 font-mono">
+                  Targeta 1 de {queue.length} pendents
+                </div>
+              </div>
+
+              {/* Card Face: BACK */}
+              <div className="card-face card-face-back bg-gradient-to-b from-[#002147] to-[#00152e] text-white border-2 border-crimson-700 p-8 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-amber-300">
+                    {selectedDay} &bull; Resposta Oficial
+                  </span>
+                  <span className="text-[11px] font-mono text-white/70 bg-white/10 px-2 py-0.5 rounded border border-white/20">
+                    Clica per girar
+                  </span>
+                </div>
+
+                <div className="text-center my-auto px-4">
+                  <h2 className="text-2xl sm:text-3xl font-serif-academic font-bold text-white leading-relaxed">
+                    {direction === 'eng_to_cat' ? currentCard.cat : currentCard.eng}
+                  </h2>
+                </div>
+
+                <div className="text-center text-xs text-slate-300 font-mono">
+                  Avalua el teu coneixement amb els botons inferiors
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Action Decision Buttons */}
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={handleHard}
+              className="py-3 px-4 rounded-xl bg-white border border-rose-200 text-rose-700 font-bold hover:bg-rose-50 hover:border-rose-300 shadow-sm transition-all flex flex-col items-center justify-center gap-0.5"
+            >
+              <span className="text-sm font-semibold">Difícil (Repetir)</span>
+              <span className="text-[10px] font-mono text-rose-400">Tecla 1 &bull; Registra a Supabase</span>
+            </button>
+
+            <button
+              onClick={handleEasy}
+              className="py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-bold hover:from-emerald-700 hover:to-teal-800 shadow-md transition-all flex flex-col items-center justify-center gap-0.5"
+            >
+              <span className="text-sm font-semibold">Fàcil (Memoritzat)</span>
+              <span className="text-[10px] font-mono text-emerald-100">Tecla 2</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Completion State */
+        <div className="rounded-xl bg-white border border-slate-200/90 p-8 text-center shadow-sm space-y-4">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl mx-auto">
+            ✓
+          </div>
+          <h2 className="text-2xl font-serif-academic font-bold text-oxford-950">
+            Sessió de {selectedDay} Completada!
+          </h2>
+          <p className="text-sm text-slate-600 max-w-md mx-auto">
+            Has consolidat totes les expressions d'aquest grup amb el mètode d'Active Recall. Continua amb un altre dia o repassa de nou.
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={handleResetSession}
+              className="px-5 py-2.5 rounded-lg bg-oxford-900 text-white font-bold text-xs uppercase tracking-wider hover:bg-oxford-800 transition-all shadow-sm"
+            >
+              Repassar Aquest Dia de Nou
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- AUTH VIEW COMPONENT (LIGHT ACADEMIC THEME) ---
+function AuthView({ onAuthSuccess }) {
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    if (!supabaseClient) {
+      setErrorMsg('No s\'ha pogut connectar amb el servidor d\'autenticació.');
+      return;
+    }
+    setErrorMsg('');
+    setSuccessMsg('');
+    setSubmitting(true);
+
+    try {
+      if (authMode === 'login') {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
+        });
+        if (error) {
+          setErrorMsg(
+            error.message.includes('Invalid login') 
+              ? 'Credencials incorrectes. Comprova el correu i la contrasenya.' 
+              : error.message
+          );
+        } else if (data?.session) {
+          setSuccessMsg('Accés autoritzat. Benvingut de nou a l\'acadèmia, alumne.');
+          if (onAuthSuccess) onAuthSuccess(data.session);
+        }
+      } else {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email: email.trim(),
+          password: password,
+        });
+        if (error) {
+          setErrorMsg(error.message);
+        } else if (data?.user && !data?.session) {
+          setSuccessMsg('Compte creat correctament! Comprova la safata d\'entrada per confirmar el correu electrònic.');
+        } else if (data?.session) {
+          setSuccessMsg('Registre completat. Benvingut a JP ENGLISH HUB. Preparant mòduls d\'estudi...');
+          if (onAuthSuccess) onAuthSuccess(data.session);
+        }
+      }
+    } catch (err) {
+      setErrorMsg('Error de connexió amb el servei de Supabase.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col justify-center items-center px-4 py-12 font-sans selection:bg-crimson-100 selection:text-crimson-800">
+      <div className="w-full max-w-md">
+        
+        {/* Emblem & Academy Title */}
+        <div className="text-center mb-8">
+          <div className="inline-block relative mb-3">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-amber-400/80 bg-white p-1 shadow-xl flex items-center justify-center mx-auto">
+              <img 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuANdXRXZBg9cU1j_sfQ2wF0gfNyU-WjnrBPhwFOdnBtWPJBAgmO-GHhe0RVI59drNLxSn5I_ExV80sfuqPeWqh7JCvAqSwdlaQ7HdsDMYpS111Dce5dA21_LpwJtyKyqCpJJ3oAQJfJDwP99ZkShKr9_sTB-SG3a98quS72SacRrUQT_wSQc4LZfrGx_aYO2vYhHcJPjFM8UQh1IYtiUZxQXrojerqzLEghEdm00pSiS9aBGxFsr-C9eg" 
+                alt="JP English Hub Crest" 
+                className="w-full h-full object-cover rounded-full"
+              />
+            </div>
+            <span className="absolute -bottom-1 -right-1 bg-crimson-700 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/40 shadow-sm">
+              PAU
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-serif-academic font-bold text-oxford-950">
+            JP ENGLISH HUB
+          </h1>
+          <p className="text-xs uppercase tracking-widest text-crimson-700 font-mono font-bold mt-1">
+            Plataforma Acadèmica Batxillerat &amp; PAU
+          </p>
+        </div>
+
+        {/* Auth Card */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl overflow-hidden">
+          
+          {/* Tabs: Iniciar Sessió / Crear Compte */}
+          <div className="grid grid-cols-2 bg-slate-100 border-b border-slate-200 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => { setAuthMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+              className={`py-3.5 transition-all text-center ${
+                authMode === 'login' 
+                  ? 'bg-white text-oxford-900 border-b-2 border-crimson-700 font-bold' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Iniciar Sessió
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAuthMode('register'); setErrorMsg(''); setSuccessMsg(''); }}
+              className={`py-3.5 transition-all text-center ${
+                authMode === 'register' 
+                  ? 'bg-white text-oxford-900 border-b-2 border-crimson-700 font-bold' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Crear Compte
+            </button>
+          </div>
+
+          <form onSubmit={handleAuth} className="p-6 sm:p-8 space-y-4">
+            {errorMsg && (
+              <div className="p-3 bg-crimson-50 border border-crimson-200 text-crimson-800 text-xs rounded-lg flex items-center gap-2">
+                <span>⚠️</span> <span>{errorMsg}</span>
+              </div>
+            )}
+            {successMsg && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg flex items-center gap-2">
+                <span>✓</span> <span>{successMsg}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1.5">
+                Correu Electrònic
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="alumne@institut.cat"
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-oxford-700 focus:ring-1 focus:ring-oxford-700 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1.5">
+                Contrasenya
+              </label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-oxford-700 focus:ring-1 focus:ring-oxford-700 transition-all"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full mt-2 bg-gradient-to-r from-oxford-900 to-oxford-800 hover:from-oxford-800 hover:to-crimson-800 text-white font-bold py-2.5 px-4 rounded-lg text-sm tracking-wide shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {submitting ? 'Processant...' : (authMode === 'login' ? 'Entrar a la Plataforma →' : 'Crear Compte →')}
+            </button>
+          </form>
+
+          <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 text-center text-[11px] text-slate-500">
+            Seguretat d'accés gestionada oficialment amb Supabase.
+          </div>
+        </div>
+
+        {/* Academic Footer Info */}
+        <div className="mt-8 text-center text-xs text-slate-400">
+          JP ENGLISH HUB &bull; Desenvolupat per <strong className="text-crimson-700 font-bold">JanPick</strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- AUTHAPP WRAPPER COMPONENT ---
+function AuthApp() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!supabaseClient) {
+      setLoading(false);
+      return;
+    }
+
+    // 1. Initial Session Check
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // 2. Realtime Auth State Listener
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#002147] flex flex-col items-center justify-center text-white">
+        <div className="w-10 h-10 rounded-full border-4 border-amber-400 border-t-transparent animate-spin mb-3"></div>
+        <p className="font-serif-academic text-sm tracking-wide text-amber-200">Verificant credencials d'accés a l'acadèmia...</p>
+      </div>
+    );
+  }
+
+  // If NOT authenticated, render AuthView
+  if (!session) {
+    return <AuthView onAuthSuccess={(sess) => setSession(sess)} />;
+  }
+
+  // If authenticated, render App passing session, userEmail and onLogout
+  return (
+    <App 
+      session={session}
+      userEmail={session.user.email} 
+      onLogout={() => supabaseClient.auth.signOut()} 
+    />
+  );
+}
+
+// --- REACT MOUNTING ---
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<AuthApp />);
+</script>
+</body></html>
