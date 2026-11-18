@@ -31,7 +31,7 @@
     .perspective-container { perspective: 1200px; }
     .card-3d-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
     .card-3d-inner.flipped { transform: rotateY(180deg); }
-    .card-face { position: absolute; width: 100%; height: 100%; top: 0; left: 0; backface-visibility: hidden; border-radius: 1rem; }
+    .card-face { position: absolute; width: 100%; height: 100%; top: 0; left: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 1rem; }
     .card-face-back { transform: rotateY(180deg); }
     .view-enter { animation: viewFadeSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes viewFadeSlide { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -52,41 +52,6 @@ const { useState, useEffect, useRef, useMemo } = React;
 const supabaseUrl = 'https://uwpweggdinunylkotqor.supabase.co';
 const supabaseKey = 'sb_publishable_pVprwi-nYLB1vG8aMmPrfA_7kVwm2JQ';
 const supabaseClient = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
-
-// --- GLOBAL AUDIO UTILITY: BRITISH ENGLISH PRONUNCIATION ---
-let currentAudio = null;
-function speakEnglish(text, e) {
-  if (e) e.stopPropagation();
-  if (!text) return;
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  if (window.speechSynthesis) window.speechSynthesis.cancel();
-
-  const cleanText = text.replace(/["()]/g, '').trim();
-  let fellBack = false;
-  const fallbackSpeak = () => {
-    if (fellBack || !window.speechSynthesis) return;
-    fellBack = true;
-    const utter = new SpeechSynthesisUtterance(cleanText);
-    utter.lang = 'en-GB';
-    utter.rate = 0.92;
-    const voices = window.speechSynthesis.getVoices();
-    const bestVoice = voices.find(v => v.lang.startsWith('en-GB') && (v.name.includes('Natural') || v.name.includes('Google')))
-      || voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google')))
-      || voices.find(v => v.lang.startsWith('en-GB'))
-      || voices.find(v => v.lang.startsWith('en'));
-    if (bestVoice) utter.voice = bestVoice;
-    window.speechSynthesis.speak(utter);
-  };
-
-  const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-GB&q=${encodeURIComponent(cleanText)}`;
-  const audio = new Audio(url);
-  currentAudio = audio;
-  audio.onerror = fallbackSpeak;
-  audio.play().catch(fallbackSpeak);
-}
 
 // --- VERBS DATA (ALL 162 VERBS) ---
 const VERBS_DATA = [
@@ -476,6 +441,8 @@ function App({ session, userEmail, onLogout }) {
               <button onClick={() => setCurrentTab('home')} className={`px-3 py-1.5 rounded transition-all whitespace-nowrap ${currentTab === 'home' ? 'bg-crimson-700 text-white shadow-sm font-bold' : 'text-slate-300 hover:text-white'}`}>Inici</button>
               <button onClick={() => setCurrentTab('verbs')} className={`px-3 py-1.5 rounded transition-all whitespace-nowrap ${currentTab === 'verbs' ? 'bg-crimson-700 text-white shadow-sm font-bold' : 'text-slate-300 hover:text-white'}`}>Verbs Irregulars</button>
               <button onClick={() => setCurrentTab('vocab')} className={`px-3 py-1.5 rounded transition-all whitespace-nowrap ${currentTab === 'vocab' ? 'bg-crimson-700 text-white shadow-sm font-bold' : 'text-slate-300 hover:text-white'}`}>Vocabulari & Idioms</button>
+              
+              {/* TAB: Els Meus Errors */}
               <button onClick={() => setCurrentTab('weaknesses')} className={`px-3 py-1.5 rounded transition-all whitespace-nowrap flex items-center gap-1.5 ${currentTab === 'weaknesses' ? 'bg-crimson-700 text-white shadow-sm font-bold' : 'text-slate-300 hover:text-white'}`}>
                 Els Meus Errors <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
               </button>
@@ -523,7 +490,7 @@ function App({ session, userEmail, onLogout }) {
   );
 }
 
-// --- HOME VIEW WITH GLOBAL PROGRESS ---
+// --- HOME VIEW WITH GLOBAL PROGRESS (FASE 4) ---
 function HomeView({ onNavigate, streak, session }) {
   const [globalProgress, setGlobalProgress] = useState({ count: 0, percentage: 0 });
   const TOTAL_ITEMS = 269; // 162 verbs + 107 expressions
@@ -591,518 +558,538 @@ function HomeView({ onNavigate, streak, session }) {
         {/* Global Progress Bar */}
         <div className="mt-6 pt-5 border-t border-slate-100">
           <div className="flex items-center justify-between text-xs mb-2">
-            <span className="font-semibold text-oxford-900 font-serif-academic tracking-wide">Progrés Global de la Plataforma</span>
+            <span className="font-semibold text-oxford-900 font-serif-academic tracking-wide">
+              Progrés Global Acadèmic PAU
+            </span>
             <span className="font-mono font-bold text-crimson-700 bg-crimson-50 px-2 py-0.5 rounded border border-crimson-100">
-              {globalProgress.count} / {TOTAL_ITEMS} ({globalProgress.percentage}%)
+              {globalProgress.count} / {TOTAL_ITEMS} ítems ({globalProgress.percentage}%)
             </span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
-            <div className="bg-gradient-to-r from-oxford-800 via-crimson-700 to-amber-500 h-full rounded-full transition-all duration-500" style={{ width: `${globalProgress.percentage}%` }}></div>
+            <div 
+              className="bg-gradient-to-r from-oxford-800 via-crimson-700 to-amber-500 h-full rounded-full transition-all duration-500"
+              style={{ width: `${globalProgress.percentage}%` }}
+            />
           </div>
-          <p className="text-[11px] text-slate-400 mt-1.5 font-sans">Calculat a partir dels verbs consolidats i targetes de vocabulari completades.</p>
+          <p className="text-[11px] text-slate-400 mt-1.5 font-sans">
+            Suma de verbs consolidats al mòdul d'escriptura i expressions dominades als malls de flashcards.
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs hover:border-slate-300 transition-all">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div onClick={() => onNavigate('verbs')} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md hover:border-oxford-700 transition-all cursor-pointer group flex flex-col justify-between">
           <div>
-            <div className="w-10 h-10 rounded-lg bg-oxford-50 text-oxford-900 flex items-center justify-center font-bold text-sm mb-4 border border-oxford-100">
-              VI
-            </div>
-            <h2 className="text-lg font-serif-academic font-bold text-oxford-950">Entrenador de Verbs Irregulars</h2>
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-              Mètode complet de 162 verbs dividits en els patrons AAA, ABA, ABB i ABC. Validació bidireccional amb teclat ràpid Hyper-Flow.
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-oxford-700 bg-oxford-50 px-2.5 py-1 rounded border border-oxford-100 inline-block mb-3">Mòdul 1 | Hyper-Flow</span>
+            <h3 className="font-serif-academic text-lg font-bold text-oxford-950 group-hover:text-crimson-700 transition-colors">Verbs Irregulars</h3>
+            <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+              162 verbs agrupats per morfologia (AAA, ABA, ABB, ABC). Escriptura activa amb validació instantània i auto-salt de camp.
             </p>
           </div>
-          <button onClick={() => onNavigate('verbs')} className="mt-6 w-full py-2.5 px-4 rounded-lg bg-oxford-900 hover:bg-oxford-800 text-white text-xs font-semibold tracking-wide transition-all shadow-sm">
-            Començar Entrenament Verbs &rarr;
-          </button>
+          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-oxford-900">
+            <span>Iniciar Pràctica</span>
+            <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs hover:border-slate-300 transition-all">
+        <div onClick={() => onNavigate('vocab')} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md hover:border-oxford-700 transition-all cursor-pointer group flex flex-col justify-between">
           <div>
-            <div className="w-10 h-10 rounded-lg bg-crimson-50 text-crimson-700 flex items-center justify-center font-bold text-sm mb-4 border border-crimson-100">
-              VC
-            </div>
-            <h2 className="text-lg font-serif-academic font-bold text-oxford-950">Targetes 3D de Vocabulari</h2>
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-              107 expressions organitzades per dies acadèmics (Dilluns, Dimarts, Divendres) amb el sistema 3D Flip Card i Active Recall.
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-crimson-700 bg-crimson-50 px-2.5 py-1 rounded border border-crimson-100 inline-block mb-3">Mòdul 2 | Active Recall</span>
+            <h3 className="font-serif-academic text-lg font-bold text-oxford-950 group-hover:text-crimson-700 transition-colors">Vocabulari & Idioms</h3>
+            <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+              107 expressions dividides per dies. Targetes tridimensionals interactives amb mètode de repetició i desfer.
             </p>
           </div>
-          <button onClick={() => onNavigate('vocab')} className="mt-6 w-full py-2.5 px-4 rounded-lg bg-crimson-700 hover:bg-crimson-800 text-white text-xs font-semibold tracking-wide transition-all shadow-sm">
-            Practicar Flashcards 3D &rarr;
-          </button>
+          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-oxford-900">
+            <span>Explorar Fitxes</span>
+            <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </div>
+        </div>
+
+        <div onClick={() => onNavigate('weaknesses')} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:shadow-md hover:border-crimson-700 transition-all cursor-pointer group flex flex-col justify-between">
+          <div>
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-1 rounded border border-amber-200 inline-block mb-3">Mòdul 3 | Diagnòstic</span>
+            <h3 className="font-serif-academic text-lg font-bold text-oxford-950 group-hover:text-crimson-700 transition-colors">Els Meus Errors</h3>
+            <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+              Panell intel·ligent amb els elements més fallats a Supabase i sessió d'entrenament actiu per flashcards.
+            </p>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-crimson-700">
+            <span>Repassar Errades</span>
+            <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// --- 1. VERBS TRAINER COMPONENT (WITH 🔊 PRONUNCIATION ICON) ---
+// --- 2. VERBS TRAINER (VERTICAL LIST, HYPER-FLOW, PERSISTENCE) ---
 function VerbsTrainer({ onCompleteAction }) {
-  const [selectedGroup, setSelectedGroup] = useState('ALL');
-  const [mode, setMode] = useState('forms'); // 'forms' | 'trans'
-  const [transDirection, setTransDirection] = useState('eng_to_cat');
+  const [selectedType, setSelectedType] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mode, setMode] = useState('pastPart'); // 'pastPart' | 'trans'
   const [answers, setAnswers] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('esh_verbs_answers') || '{}');
+      const saved = localStorage.getItem('esh_verbs_answers');
+      return saved ? JSON.parse(saved) : {};
+    } catch(e) { return {}; }
+  });
+  const [revealed, setRevealed] = useState(() => {
+    try {
+      const saved = localStorage.getItem('esh_verbs_revealed');
+      return saved ? JSON.parse(saved) : {};
     } catch(e) { return {}; }
   });
 
+  const inputsRef = useRef({});
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('esh_verbs_answers', JSON.stringify(answers));
+    } catch (e) {}
+  }, [answers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('esh_verbs_revealed', JSON.stringify(revealed));
+    } catch (e) {}
+  }, [revealed]);
+
   const filteredVerbs = useMemo(() => {
-    if (selectedGroup === 'ALL') return VERBS_DATA;
-    return VERBS_DATA.filter(v => v.type === selectedGroup);
-  }, [selectedGroup]);
-
-  const handleInputChange = (id, field, val) => {
-    setAnswers(prev => {
-      const updated = {
-        ...prev,
-        [id]: { ...(prev[id] || {}), [field]: val }
-      };
-      try {
-        localStorage.setItem('esh_verbs_answers', JSON.stringify(updated));
-      } catch(e) {}
-      return updated;
+    return VERBS_DATA.filter(verb => {
+      const matchesType = selectedType === 'ALL' || verb.type === selectedType;
+      const matchesSearch = searchQuery === '' || 
+        verb.inf.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        verb.cat.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesType && matchesSearch;
     });
-  };
+  }, [selectedType, searchQuery]);
 
-  const handleKeyDown = (e, index, currentField) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (mode === 'forms') {
-        if (currentField === 'past') {
-          const nextInput = document.getElementById(`part-${index}`);
-          if (nextInput) nextInput.focus();
-        } else if (currentField === 'part') {
-          const nextInput = document.getElementById(`past-${index + 1}`);
-          if (nextInput) nextInput.focus();
+  const handleInputChange = (verbId, field, val) => {
+    const updated = {
+      ...answers,
+      [verbId]: {
+        ...(answers[verbId] || {}),
+        [field]: val
+      }
+    };
+    setAnswers(updated);
+
+    const verb = VERBS_DATA.find(v => v.id === verbId);
+    if (!verb) return;
+
+    if (mode === 'pastPart') {
+      if (field === 'past' && checkVerbMatch(val, verb.past, verb.altPast)) {
+        if (inputsRef.current[`${verbId}_part`]) {
+          inputsRef.current[`${verbId}_part`].focus();
         }
-      } else {
-        const nextInput = document.getElementById(`trans-${index + 1}`);
-        if (nextInput) nextInput.focus();
+      } else if (field === 'part' && checkVerbMatch(val, verb.part, verb.altPart)) {
+        const curIdx = filteredVerbs.findIndex(v => v.id === verbId);
+        if (curIdx !== -1 && curIdx < filteredVerbs.length - 1) {
+          const nextVerb = filteredVerbs[curIdx + 1];
+          if (inputsRef.current[`${nextVerb.id}_past`]) {
+            inputsRef.current[`${nextVerb.id}_past`].focus();
+          }
+        }
+        if (onCompleteAction) onCompleteAction();
+      }
+    } else if (mode === 'trans') {
+      if (field === 'trans' && checkMeaningMatch(val, verb.cat)) {
+        const curIdx = filteredVerbs.findIndex(v => v.id === verbId);
+        if (curIdx !== -1 && curIdx < filteredVerbs.length - 1) {
+          const nextVerb = filteredVerbs[curIdx + 1];
+          if (inputsRef.current[`${nextVerb.id}_trans`]) {
+            inputsRef.current[`${nextVerb.id}_trans`].focus();
+          }
+        }
+        if (onCompleteAction) onCompleteAction();
       }
     }
   };
 
-  const stats = useMemo(() => {
-    let correctPast = 0;
-    let correctPart = 0;
-    let correctTrans = 0;
+  const handleResetAll = () => {
+    if (confirm("Segur que vols reiniciar tot el progrés dels Verbs Irregulars? S'esborraran les respostes introduïdes.")) {
+      setAnswers({});
+      setRevealed({});
+      try {
+        localStorage.removeItem('esh_verbs_answers');
+        localStorage.removeItem('esh_verbs_revealed');
+      } catch(e) {}
+    }
+  };
 
-    filteredVerbs.forEach(v => {
-      const a = answers[v.id] || {};
-      if (checkVerbMatch(a.past, v.past, v.altPast)) correctPast++;
-      if (checkVerbMatch(a.part, v.part, v.altPart)) correctPart++;
-      if (transDirection === 'eng_to_cat') {
-        if (checkMeaningMatch(a.trans, v.cat)) correctTrans++;
-      } else {
-        if (checkVerbMatch(a.trans, v.inf)) correctTrans++;
-      }
-    });
-
-    return { correctPast, correctPart, correctTrans, total: filteredVerbs.length };
-  }, [filteredVerbs, answers, transDirection]);
+  const toggleReveal = (verbId) => {
+    setRevealed(prev => ({
+      ...prev,
+      [verbId]: !prev[verbId]
+    }));
+  };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div>
-            <h2 className="text-xl font-serif-academic font-bold text-oxford-950">Entrenador de Verbs Irregulars</h2>
-            <p className="text-xs text-slate-500 font-sans mt-0.5">162 Verbs amb validació i registre d'avanç continuat.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setMode('forms')} className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${mode === 'forms' ? 'bg-oxford-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Formes (Past/Part)</button>
-            <button onClick={() => setMode('trans')} className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${mode === 'trans' ? 'bg-oxford-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Traducció</button>
-          </div>
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-serif-academic font-bold text-oxford-950">Entrenador de Verbs Irregulars</h2>
+          <p className="text-xs text-slate-500 font-sans mt-0.5">162 Verbs amb validació automàtica i salt intel·ligent Hyper-Flow.</p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {['ALL', 'AAA', 'ABA', 'ABB', 'ABC'].map(grp => (
-              <button key={grp} onClick={() => setSelectedGroup(grp)} className={`px-2.5 py-1 rounded font-mono font-medium transition-all ${selectedGroup === grp ? 'bg-crimson-700 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                {grp === 'ALL' ? 'Tots (162)' : `Grup ${grp}`}
-              </button>
-            ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex bg-slate-100 p-1 rounded-lg text-xs font-semibold">
+            <button onClick={() => setMode('pastPart')} className={`px-3 py-1 rounded transition-all ${mode === 'pastPart' ? 'bg-oxford-900 text-white shadow-xs' : 'text-slate-600 hover:text-oxford-950'}`}>Past & Part</button>
+            <button onClick={() => setMode('trans')} className={`px-3 py-1 rounded transition-all ${mode === 'trans' ? 'bg-oxford-900 text-white shadow-xs' : 'text-slate-600 hover:text-oxford-950'}`}>Traducció</button>
           </div>
 
-          {mode === 'trans' && (
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500 font-sans">Sentit:</span>
-              <button onClick={() => setTransDirection(d => d === 'eng_to_cat' ? 'cat_to_eng' : 'eng_to_cat')} className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 font-medium text-oxford-900 border border-slate-200">
-                {transDirection === 'eng_to_cat' ? 'Anglès → Català' : 'Català → Anglès'}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="pt-2 flex items-center justify-between text-xs font-mono border-t border-slate-100">
-          <span className="text-slate-500">Comprovació de precisió:</span>
-          {mode === 'forms' ? (
-            <div className="flex gap-4">
-              <span>Past: <strong className="text-emerald-600">{stats.correctPast}</strong>/{stats.total}</span>
-              <span>Participle: <strong className="text-emerald-600">{stats.correctPart}</strong>/{stats.total}</span>
-            </div>
-          ) : (
-            <span>Traduccions: <strong className="text-emerald-600">{stats.correctTrans}</strong>/{stats.total}</span>
-          )}
+          <button onClick={handleResetAll} className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-crimson-700 hover:border-crimson-200 text-slate-600 text-xs font-semibold transition-all">
+            🔄 Reiniciar
+          </button>
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#002147] text-white font-mono uppercase text-[11px] tracking-wider">
-              <tr>
-                <th className="py-3 px-4 w-12 text-center">#</th>
-                <th className="py-3 px-4">Grup</th>
-                <th className="py-3 px-4">Infinitiu</th>
-                {mode === 'forms' ? (
-                  <>
-                    <th className="py-3 px-4">Past Simple</th>
-                    <th className="py-3 px-4">Past Participle</th>
-                    <th className="py-3 px-4">Significat</th>
-                  </>
-                ) : (
-                  <>
-                    <th className="py-3 px-4">{transDirection === 'eng_to_cat' ? 'Introdueix en Català' : 'Introdueix Infinitiu'}</th>
-                    <th className="py-3 px-4">Significat / Referència</th>
-                  </>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredVerbs.map((v, idx) => {
-                const a = answers[v.id] || {};
-                const isPastCorrect = checkVerbMatch(a.past, v.past, v.altPast);
-                const isPartCorrect = checkVerbMatch(a.part, v.part, v.altPart);
-                const isTransCorrect = transDirection === 'eng_to_cat' 
-                  ? checkMeaningMatch(a.trans, v.cat)
-                  : checkVerbMatch(a.trans, v.inf);
-
-                return (
-                  <tr key={v.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-2.5 px-4 text-center font-mono text-slate-400">{v.id}</td>
-                    <td className="py-2.5 px-4 font-mono font-semibold text-oxford-900">{v.type}</td>
-                    <td className="py-2.5 px-4 font-bold text-oxford-950 font-serif-academic text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <span>{v.inf}</span>
-                        {/* 🔊 Pronunciation button reads ONLY verb.inf */}
-                        <button
-                          type="button"
-                          onClick={(e) => speakEnglish(v.inf, e)}
-                          className="text-slate-400 hover:text-crimson-700 transition-colors p-0.5 rounded text-xs select-none"
-                          title={`Escoltar pronunciació de "${v.inf}"`}
-                        >
-                          🔊
-                        </button>
-                      </div>
-                    </td>
-
-                    {mode === 'forms' ? (
-                      <>
-                        <td className="py-2 px-4">
-                          <input
-                            id={`past-${idx}`}
-                            type="text"
-                            value={a.past || ''}
-                            onChange={(e) => handleInputChange(v.id, 'past', e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(e, idx, 'past')}
-                            placeholder={v.past.substring(0, 1) + '...'}
-                            className={`w-32 px-2.5 py-1 rounded border text-xs font-mono transition-all ${
-                              a.past
-                                ? isPastCorrect
-                                  ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold'
-                                  : 'bg-rose-50 border-rose-300 text-rose-800'
-                                : 'border-slate-200 focus:border-oxford-700'
-                            }`}
-                          />
-                        </td>
-                        <td className="py-2 px-4">
-                          <input
-                            id={`part-${idx}`}
-                            type="text"
-                            value={a.part || ''}
-                            onChange={(e) => handleInputChange(v.id, 'part', e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(e, idx, 'part')}
-                            placeholder={v.part.substring(0, 1) + '...'}
-                            className={`w-32 px-2.5 py-1 rounded border text-xs font-mono transition-all ${
-                              a.part
-                                ? isPartCorrect
-                                  ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold'
-                                  : 'bg-rose-50 border-rose-300 text-rose-800'
-                                : 'border-slate-200 focus:border-oxford-700'
-                            }`}
-                          />
-                        </td>
-                        <td className="py-2 px-4 text-slate-500 font-sans text-xs">{v.cat}</td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="py-2 px-4">
-                          <input
-                            id={`trans-${idx}`}
-                            type="text"
-                            value={a.trans || ''}
-                            onChange={(e) => handleInputChange(v.id, 'trans', e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(e, idx, 'trans')}
-                            placeholder="Escriu la resposta..."
-                            className={`w-64 px-2.5 py-1 rounded border text-xs font-sans transition-all ${
-                              a.trans
-                                ? isTransCorrect
-                                  ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold'
-                                  : 'bg-rose-50 border-rose-300 text-rose-800'
-                                : 'border-slate-200 focus:border-oxford-700'
-                            }`}
-                          />
-                        </td>
-                        <td className="py-2 px-4 text-slate-500 font-sans text-xs">
-                          {transDirection === 'eng_to_cat' ? v.cat : v.inf}
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          {['ALL', 'AAA', 'ABA', 'ABB', 'ABC'].map(t => (
+            <button key={t} onClick={() => setSelectedType(t)} className={`px-3 py-1 rounded-md text-xs font-mono font-bold transition-all ${selectedType === t ? 'bg-crimson-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+              {t === 'ALL' ? 'TOTS (162)' : t}
+            </button>
+          ))}
         </div>
+
+        <div className="relative">
+          <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Cercar verb..." className="w-full sm:w-48 pl-3 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-oxford-700" />
+          {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1.5 text-xs text-slate-400">&times;</button>}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {filteredVerbs.map(verb => {
+          const userAns = answers[verb.id] || {};
+          const isRev = !!revealed[verb.id];
+          const isPastCorrect = checkVerbMatch(userAns.past, verb.past, verb.altPast);
+          const isPartCorrect = checkVerbMatch(userAns.part, verb.part, verb.altPart);
+          const isTransCorrect = checkMeaningMatch(userAns.trans, verb.cat);
+
+          return (
+            <div key={verb.id} className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-[170px]">
+                <span className="w-6 font-mono text-[11px] text-slate-400 font-bold">#{verb.id}</span>
+                <div>
+                  <span className="font-serif-academic font-bold text-base text-oxford-950">{verb.inf}</span>
+                  <span className="text-[10px] font-mono ml-2 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">{verb.type}</span>
+                  <p className="text-xs text-slate-500 font-sans truncate max-w-[200px]">{verb.cat}</p>
+                </div>
+              </div>
+
+              {mode === 'pastPart' ? (
+                <div className="flex items-center gap-2 flex-1 max-w-md">
+                  <div className="relative flex-1">
+                    <input
+                      ref={el => inputsRef.current[`${verb.id}_past`] = el}
+                      type="text"
+                      placeholder="Past Simple"
+                      value={userAns.past || ''}
+                      onChange={e => handleInputChange(verb.id, 'past', e.target.value)}
+                      className={`w-full px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${isPastCorrect ? 'bg-emerald-50 border-emerald-500 text-emerald-900 font-bold' : 'border-slate-200'}`}
+                    />
+                    {isRev && !isPastCorrect && (
+                      <span className="absolute right-2 top-2 text-[10px] font-mono text-amber-700 font-bold">{verb.past}</span>
+                    )}
+                  </div>
+
+                  <div className="relative flex-1">
+                    <input
+                      ref={el => inputsRef.current[`${verb.id}_part`] = el}
+                      type="text"
+                      placeholder="Past Participle"
+                      value={userAns.part || ''}
+                      onChange={e => handleInputChange(verb.id, 'part', e.target.value)}
+                      className={`w-full px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${isPartCorrect ? 'bg-emerald-50 border-emerald-500 text-emerald-900 font-bold' : 'border-slate-200'}`}
+                    />
+                    {isRev && !isPartCorrect && (
+                      <span className="absolute right-2 top-2 text-[10px] font-mono text-amber-700 font-bold">{verb.part}</span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-1 max-w-md">
+                  <div className="relative flex-1">
+                    <input
+                      ref={el => inputsRef.current[`${verb.id}_trans`] = el}
+                      type="text"
+                      placeholder="Traducció en Català"
+                      value={userAns.trans || ''}
+                      onChange={e => handleInputChange(verb.id, 'trans', e.target.value)}
+                      className={`w-full px-3 py-1.5 text-xs rounded-lg border transition-all ${isTransCorrect ? 'bg-emerald-50 border-emerald-500 text-emerald-900 font-bold' : 'border-slate-200'}`}
+                    />
+                    {isRev && !isTransCorrect && (
+                      <span className="absolute right-2 top-2 text-[10px] text-amber-700 font-semibold">{verb.cat}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                <button onClick={() => toggleReveal(verb.id)} className="p-1.5 text-slate-400 hover:text-oxford-900 text-xs" title="Mostrar solució">
+                  {isRev ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// --- 2. VOCAB TRAINER COMPONENT (WITH RESTORED KEYBOARD SHORTCUTS [1]/[2]/Space & 🔊 PRONUNCIATION) ---
+// --- 3. VOCAB TRAINER (3D FLASHCARDS, SUPABASE MISTAKES LOGGING, LOCALSTORAGE) ---
 function VocabTrainer({ session, onCompleteAction }) {
   const [selectedDay, setSelectedDay] = useState('Dilluns');
-  const [direction, setDirection] = useState('eng_to_cat');
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState('cat_to_eng');
   const [isFlipped, setIsFlipped] = useState(false);
-  const [historyStack, setHistoryStack] = useState([]);
-  const [masteredList, setMasteredList] = useState(() => {
+
+  const getDayItems = (day) => VOCAB_DATA.filter(item => item.day === day);
+
+  const [queue, setQueue] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('esh_vocab_mastered_Dilluns') || '[]');
+      const saved = localStorage.getItem(`esh_vocab_queue_${selectedDay}`);
+      return saved ? JSON.parse(saved) : getDayItems(selectedDay);
+    } catch(e) { return getDayItems(selectedDay); }
+  });
+
+  const [mastered, setMastered] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`esh_vocab_mastered_${selectedDay}`);
+      return saved ? JSON.parse(saved) : [];
     } catch(e) { return []; }
   });
 
-  const dayVocab = useMemo(() => {
-    return VOCAB_DATA.filter(v => v.day === selectedDay);
+  const [historyStack, setHistoryStack] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`esh_vocab_history_${selectedDay}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch(e) { return []; }
+  });
+
+  useEffect(() => {
+    try {
+      const savedQ = localStorage.getItem(`esh_vocab_queue_${selectedDay}`);
+      const savedM = localStorage.getItem(`esh_vocab_mastered_${selectedDay}`);
+      const savedH = localStorage.getItem(`esh_vocab_history_${selectedDay}`);
+      setQueue(savedQ ? JSON.parse(savedQ) : getDayItems(selectedDay));
+      setMastered(savedM ? JSON.parse(savedM) : []);
+      setHistoryStack(savedH ? JSON.parse(savedH) : []);
+      setIsFlipped(false);
+    } catch(e) {
+      setQueue(getDayItems(selectedDay));
+      setMastered([]);
+      setHistoryStack([]);
+    }
   }, [selectedDay]);
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(`esh_vocab_mastered_${selectedDay}`) || '[]');
-      setMasteredList(saved);
-    } catch(e) {
-      setMasteredList([]);
-    }
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    setHistoryStack([]);
-  }, [selectedDay]);
+      localStorage.setItem(`esh_vocab_queue_${selectedDay}`, JSON.stringify(queue));
+      localStorage.setItem(`esh_vocab_mastered_${selectedDay}`, JSON.stringify(mastered));
+      localStorage.setItem(`esh_vocab_history_${selectedDay}`, JSON.stringify(historyStack));
+    } catch(e) {}
+  }, [queue, mastered, historyStack, selectedDay]);
 
-  const currentItem = dayVocab[currentIndex] || dayVocab[0];
+  const currentCard = queue[0];
+  const totalDayItems = getDayItems(selectedDay).length;
 
-  const handleNext = async (isHard) => {
-    if (!currentItem) return;
+  const handleFlip = () => setIsFlipped(f => !f);
 
-    if (isHard && supabaseClient && session?.user?.id) {
-      try {
-        const { data } = await supabaseClient
-          .from('user_mistakes')
-          .select('mistake_count')
-          .eq('user_id', session.user.id)
-          .eq('word_id', currentItem.id)
-          .single();
+  const handleNext = (wasHard) => {
+    if (!currentCard) return;
 
-        const currentCount = data?.mistake_count || 0;
-        await supabaseClient
-          .from('user_mistakes')
-          .upsert({
-            user_id: session.user.id,
-            word_id: currentItem.id,
-            mistake_count: currentCount + 1,
-            last_practiced: new Date().toISOString()
-          }, { onConflict: 'user_id,word_id' });
-      } catch(e) {
-        console.error('Error sincronitzant errada a Supabase:', e);
-      }
-    }
-
-    if (!isHard) {
-      setMasteredList(prev => {
-        if (!prev.includes(currentItem.id)) {
-          const updated = [...prev, currentItem.id];
-          try {
-            localStorage.setItem(`esh_vocab_mastered_${selectedDay}`, JSON.stringify(updated));
-          } catch(e) {}
-          return updated;
-        }
-        return prev;
-      });
+    if (wasHard && supabaseClient && session?.user?.id) {
+      supabaseClient
+        .from('user_mistakes')
+        .select('id, mistake_count')
+        .eq('user_id', session.user.id)
+        .eq('word_id', currentCard.id)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (!error && data) {
+            supabaseClient
+              .from('user_mistakes')
+              .update({ mistake_count: data.mistake_count + 1, last_reviewed_at: new Date().toISOString() })
+              .eq('id', data.id)
+              .then(() => {});
+          } else if (!data) {
+            supabaseClient
+              .from('user_mistakes')
+              .insert({ user_id: session.user.id, word_id: currentCard.id, mistake_count: 1, last_reviewed_at: new Date().toISOString() })
+              .then(() => {});
+          }
+        });
     }
 
-    setHistoryStack(prev => [...prev, { index: currentIndex, flipped: isFlipped }]);
+    setHistoryStack(prev => [...prev, { card: currentCard, queue: [...queue], mastered: [...mastered] }]);
     setIsFlipped(false);
 
-    if (currentIndex < dayVocab.length - 1) {
-      setCurrentIndex(i => i + 1);
+    if (wasHard) {
+      const rest = queue.slice(1);
+      const insertIdx = Math.min(3, rest.length);
+      const newQueue = [...rest.slice(0, insertIdx), currentCard, ...rest.slice(insertIdx)];
+      setQueue(newQueue);
     } else {
-      if (window.confetti) window.confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+      setMastered(m => [...m, currentCard]);
+      setQueue(q => q.slice(1));
       if (onCompleteAction) onCompleteAction();
     }
   };
 
-  // RESTORED KEYBOARD SHORTCUTS: Space = Flip, 1 = Difícil, 2 = Ho recordo bé
+  const handleUndo = () => {
+    if (historyStack.length === 0) return;
+    const last = historyStack[historyStack.length - 1];
+    setQueue(last.queue);
+    setMastered(last.mastered);
+    setHistoryStack(h => h.slice(0, -1));
+    setIsFlipped(false);
+  };
+
+  // Keyboard shortcuts listener for VocabTrainer (Space, 1, 2)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignore if user is inside an input or textarea
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+        return;
+      }
 
-      if (e.code === 'Space') {
+      if (e.code === 'Space' || e.key === ' ') {
         e.preventDefault();
         setIsFlipped(f => !f);
       } else if (e.key === '1') {
         e.preventDefault();
-        handleNext(true); // Difícil
+        handleNext(true);
       } else if (e.key === '2') {
         e.preventDefault();
-        handleNext(false); // Ho recordo bé
+        handleNext(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, isFlipped, currentItem, selectedDay, dayVocab]);
+  }, [currentCard, queue, mastered, historyStack, session, onCompleteAction]);
 
-  const handleUndo = () => {
-    if (historyStack.length === 0) return;
-    const last = historyStack[historyStack.length - 1];
-    setHistoryStack(prev => prev.slice(0, -1));
-    setCurrentIndex(last.index);
-    setIsFlipped(last.flipped);
+  const handleResetSession = () => {
+    if (confirm(`Vols reiniciar la sessió de ${selectedDay}? Es restabliran totes les targetes d'aquest dia.`)) {
+      const original = getDayItems(selectedDay);
+      setQueue(original);
+      setMastered([]);
+      setHistoryStack([]);
+      setIsFlipped(false);
+      try {
+        localStorage.removeItem(`esh_vocab_queue_${selectedDay}`);
+        localStorage.removeItem(`esh_vocab_mastered_${selectedDay}`);
+        localStorage.removeItem(`esh_vocab_history_${selectedDay}`);
+      } catch(e) {}
+    }
   };
 
   return (
-    <div className="space-y-6 max-w-xl mx-auto">
-      <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-1.5">
+    <div className="space-y-6 max-w-2xl mx-auto">
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex bg-slate-100 p-1 rounded-lg text-xs font-semibold">
           {['Dilluns', 'Dimarts', 'Divendres'].map(day => (
-            <button key={day} onClick={() => setSelectedDay(day)} className={`px-3 py-1.5 rounded font-semibold transition-all ${selectedDay === day ? 'bg-crimson-700 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+            <button key={day} onClick={() => setSelectedDay(day)} className={`px-4 py-1.5 rounded transition-all ${selectedDay === day ? 'bg-crimson-700 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-oxford-950'}`}>
               {day}
             </button>
           ))}
         </div>
 
-        <button onClick={() => setDirection(d => d === 'eng_to_cat' ? 'cat_to_eng' : 'eng_to_cat')} className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 border border-slate-200 font-medium text-oxford-900 transition-all">
-          {direction === 'eng_to_cat' ? 'Anglès → Català' : 'Català → Anglès'}
-        </button>
-      </div>
-
-      <div className="flex items-center justify-between text-xs px-1 font-mono">
-        <span className="text-slate-500">Targeta <strong>{currentIndex + 1}</strong> de {dayVocab.length}</span>
-        <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-          Consolidades: {masteredList.length}/{dayVocab.length}
-        </span>
-      </div>
-
-      {/* 3D FLASHCARD CONTAINER */}
-      <div className="w-full h-80 perspective-container cursor-pointer select-none" onClick={() => setIsFlipped(f => !f)}>
-        <div className={`card-3d-inner ${isFlipped ? 'flipped' : ''}`}>
-          
-          {/* FRONT */}
-          <div className="card-face bg-white border-2 border-slate-200/90 p-8 flex flex-col justify-between items-center text-center shadow-md hover:border-oxford-300 transition-colors">
-            <div className="w-full flex items-center justify-between text-xs text-slate-400 font-mono">
-              <span className="uppercase tracking-wider">{selectedDay} &bull; PAU</span>
-              <span>Anvers (Clica per girar o prem Espai)</span>
-            </div>
-
-            <div className="my-auto px-4">
-              <p className="text-xs uppercase font-mono tracking-widest text-crimson-700 font-bold mb-2">
-                {direction === 'eng_to_cat' ? 'Expressió en Anglès' : 'Traducció en Català'}
-              </p>
-              <div className="flex items-center justify-center gap-2">
-                <h3 className="text-xl sm:text-2xl font-serif-academic font-bold text-oxford-950 leading-snug">
-                  {direction === 'eng_to_cat' ? currentItem?.eng : currentItem?.cat}
-                </h3>
-                {/* 🔊 Audio icon if English is on front */}
-                {direction === 'eng_to_cat' && currentItem?.eng && (
-                  <button
-                    type="button"
-                    onClick={(e) => speakEnglish(currentItem.eng, e)}
-                    className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-crimson-700 transition-colors text-base select-none shrink-0"
-                    title="Escoltar pronunciació en anglès britànic"
-                  >
-                    🔊
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <span className="text-[11px] text-slate-400 font-mono">Espai / Clic per comprovar revers &rarr;</span>
-          </div>
-
-          {/* BACK */}
-          <div className="card-face card-face-back bg-gradient-to-b from-[#001f44] to-[#00152e] text-white p-8 flex flex-col justify-between items-center text-center shadow-lg border-2 border-oxford-800">
-            <div className="w-full flex items-center justify-between text-xs text-amber-300/80 font-mono">
-              <span className="uppercase tracking-wider">{selectedDay} &bull; Solució</span>
-              <span>Revers</span>
-            </div>
-
-            <div className="my-auto px-4">
-              <p className="text-xs uppercase font-mono tracking-widest text-amber-300 font-bold mb-2">
-                {direction === 'eng_to_cat' ? 'Significat en Català' : 'Expressió en Anglès'}
-              </p>
-              <div className="flex items-center justify-center gap-2">
-                <h3 className="text-xl sm:text-2xl font-serif-academic font-bold text-white leading-snug">
-                  {direction === 'eng_to_cat' ? currentItem?.cat : currentItem?.eng}
-                </h3>
-                {/* 🔊 Audio icon if English is on back */}
-                {direction === 'cat_to_eng' && currentItem?.eng && (
-                  <button
-                    type="button"
-                    onClick={(e) => speakEnglish(currentItem.eng, e)}
-                    className="p-1 rounded hover:bg-white/10 text-amber-300 hover:text-amber-200 transition-colors text-base select-none shrink-0"
-                    title="Escoltar pronunciació en anglès britànic"
-                  >
-                    🔊
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <span className="text-[11px] text-slate-300 font-mono">Avalua la teva retenció</span>
-          </div>
-
-        </div>
-      </div>
-
-      {/* ACTION CONTROLS WITH [1] AND [2] SHORTCUT BADGES */}
-      <div className="flex items-center justify-between gap-3 pt-2">
-        <button onClick={handleUndo} disabled={historyStack.length === 0} className="px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs">
-          &#8617; Desfer
-        </button>
-
-        <div className="flex items-center gap-2 flex-1 justify-end">
-          <button onClick={() => handleNext(true)} className="px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5">
-            <span>Difícil (Repassar)</span>
-            <span className="px-1.5 py-0.5 rounded bg-rose-200/80 text-[10px] font-mono">[1]</span>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setDirection(d => d === 'cat_to_eng' ? 'eng_to_cat' : 'cat_to_eng')} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700">
+            {direction === 'cat_to_eng' ? 'Català → Anglès' : 'Anglès → Català'} 🔄
           </button>
-          <button onClick={() => handleNext(false)} className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5">
-            <span>Ho recordo bé &rarr;</span>
-            <span className="px-1.5 py-0.5 rounded bg-emerald-800 text-[10px] font-mono">[2]</span>
+          <button onClick={handleResetSession} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 text-slate-600 hover:text-crimson-700 hover:border-crimson-200">
+            🔄 Reiniciar Sessió
           </button>
         </div>
       </div>
+
+      <div className="flex items-center justify-between text-xs font-mono text-slate-500 px-1">
+        <span>Dominades: <strong>{mastered.length}</strong> / {totalDayItems}</span>
+        <span>Pendents a la cua: <strong>{queue.length}</strong></span>
+      </div>
+
+      {currentCard ? (
+        <div className="perspective-container h-72 sm:h-80 w-full cursor-pointer select-none" onClick={handleFlip}>
+          <div className={`card-3d-inner shadow-lg ${isFlipped ? 'flipped' : ''}`}>
+            {/* FRONT */}
+            <div className="card-face bg-gradient-to-br from-[#002147] to-[#041226] text-white p-8 flex flex-col justify-between border-2 border-amber-400/40">
+              <div className="flex justify-between items-center text-xs font-mono text-amber-300">
+                <span className="uppercase tracking-widest">{selectedDay} &bull; Expressió #{currentCard.id}</span>
+                <span className="text-[11px] bg-white/10 px-2 py-0.5 rounded border border-white/20">Clica per girar</span>
+              </div>
+              <div className="text-center my-auto px-4">
+                <h3 className="text-xl sm:text-2xl font-serif-academic font-bold leading-relaxed text-white">
+                  {direction === 'cat_to_eng' ? currentCard.cat : currentCard.eng}
+                </h3>
+              </div>
+              <div className="text-center text-[11px] font-mono text-slate-400">
+                [Espai] o Fes Clic per veure la resposta
+              </div>
+            </div>
+
+            {/* BACK */}
+            <div className="card-face card-face-back bg-white text-oxford-950 p-8 flex flex-col justify-between border-2 border-crimson-600 shadow-xl">
+              <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                <span className="text-crimson-700 font-bold uppercase tracking-widest">Solució Acadèmica</span>
+                <span className="text-[11px] bg-slate-100 px-2 py-0.5 rounded text-slate-600">Revisió Activa</span>
+              </div>
+              <div className="text-center my-auto px-4">
+                <p className="text-xs uppercase font-mono text-slate-400 mb-2">Traducció directa:</p>
+                <h3 className="text-xl sm:text-2xl font-serif-academic font-bold text-oxford-950 leading-relaxed">
+                  {direction === 'cat_to_eng' ? currentCard.eng : currentCard.cat}
+                </h3>
+              </div>
+              <div className="flex items-center justify-center gap-3 pt-4 border-t border-slate-100" onClick={e => e.stopPropagation()}>
+                <button onClick={() => handleNext(true)} className="flex-1 py-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5">
+                  <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-rose-200/70 text-rose-800">[1]</span>
+                  <span>Difícil (Repassar) ⚠️</span>
+                </button>
+                <button onClick={() => handleNext(false)} className="flex-1 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-colors flex items-center justify-center gap-1.5">
+                  <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-emerald-700 text-emerald-100">[2]</span>
+                  <span>Ho recordo bé ✅</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl bg-white border border-slate-200 p-12 text-center shadow-sm space-y-4">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl mx-auto">
+            🎓
+          </div>
+          <h3 className="text-xl font-serif-academic font-bold text-oxford-950">Mòdul de {selectedDay} Completat!</h3>
+          <p className="text-xs text-slate-600 max-w-sm mx-auto">
+            Has dominat totes les {totalDayItems} expressions programades per a aquesta unitat. Continua amb el següent dia o reinicia per repassar.
+          </p>
+          <button onClick={handleResetSession} className="px-5 py-2 rounded-lg bg-oxford-900 text-white text-xs font-semibold hover:bg-oxford-800 transition-all">
+            Tornar a Practicar aquest Dia
+          </button>
+        </div>
+      )}
+
+      {historyStack.length > 0 && currentCard && (
+        <div className="text-center">
+          <button onClick={handleUndo} className="text-xs text-slate-500 hover:text-oxford-900 font-semibold">
+            &larr; Desfer última acció
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-// --- 3. WEAKNESSES TRAINER (WITH ACTIVE STUDY MODE, PREV/NEXT, MASTERED & SPACEBAR KEYBOARD FLIP) ---
+// --- 4. WEAKNESSES TRAINER (WITH ACTIVE STUDY MODE) ---
 function WeaknessesTrainer({ session, onNavigate }) {
   const [mistakes, setMistakes] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ACTIVE STUDY MODE STATES
   const [studyMode, setStudyMode] = useState(false);
   const [studyQueue, setStudyQueue] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -1128,13 +1115,34 @@ function WeaknessesTrainer({ session, onNavigate }) {
         const idStr = String(row.word_id);
         const vocab = VOCAB_DATA.find(v => String(v.id) === idStr);
         if (vocab) {
-          return { ...row, cat: vocab.cat, eng: vocab.eng, tag: `Vocabulari (${vocab.day})` };
+          return {
+            ...row,
+            cat: vocab.cat,
+            eng: vocab.eng,
+            title: vocab.eng,
+            subtitle: vocab.cat,
+            tag: `Vocabulari (${vocab.day})`
+          };
         }
         const verb = VERBS_DATA.find(vb => String(vb.id) === idStr || vb.inf === idStr);
         if (verb) {
-          return { ...row, cat: verb.cat, eng: `${verb.inf} - ${verb.past} - ${verb.part}`, tag: `Verb (Grup ${verb.type})` };
+          return {
+            ...row,
+            cat: verb.cat,
+            eng: `${verb.inf} (past: ${verb.past}, part: ${verb.part})`,
+            title: `${verb.inf} - ${verb.past} - ${verb.part}`,
+            subtitle: verb.cat,
+            tag: `Verb (Grup ${verb.type})`
+          };
         }
-        return { ...row, cat: 'Expressió enregistrada', eng: `Ítem #${idStr}`, tag: 'General' };
+        return {
+          ...row,
+          cat: `Ítem #${idStr}`,
+          eng: `Ítem #${idStr}`,
+          title: `Ítem #${idStr}`,
+          subtitle: 'Punt feble registrat',
+          tag: 'General'
+        };
       });
 
       setMistakes(mapped);
@@ -1145,11 +1153,13 @@ function WeaknessesTrainer({ session, onNavigate }) {
     }
   };
 
-  useEffect(() => { fetchMistakes(); }, [session]);
+  useEffect(() => {
+    fetchMistakes();
+  }, [session]);
 
-  // Start Active Study Mode with shuffled mistakes
-  const startStudySession = () => {
+  const handleStartStudy = () => {
     if (mistakes.length === 0) return;
+    // Shuffle mistakes
     const shuffled = [...mistakes].sort(() => Math.random() - 0.5);
     setStudyQueue(shuffled);
     setCurrentIndex(0);
@@ -1157,40 +1167,26 @@ function WeaknessesTrainer({ session, onNavigate }) {
     setStudyMode(true);
   };
 
-  // Keyboard shortcut for WeaknessesTrainer: Space flips card when studyMode === true
-  useEffect(() => {
-    if (!studyMode) return;
-    const handleKeyDown = (e) => {
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-      if (e.code === 'Space') {
-        e.preventDefault();
-        setIsFlipped(f => !f);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [studyMode]);
-
-  // Previous card navigation
   const handlePrevStudyCard = () => {
     if (currentIndex > 0) {
       setIsFlipped(false);
-      setCurrentIndex(i => i - 1);
+      setCurrentIndex(prev => prev - 1);
     }
   };
 
-  // Next card navigation
   const handleNextStudyCard = () => {
     setIsFlipped(false);
-    if (currentIndex < studyQueue.length - 1) {
-      setCurrentIndex(i => i + 1);
+    if (currentIndex + 1 < studyQueue.length) {
+      setCurrentIndex(prev => prev + 1);
     } else {
+      // Completed the session
       if (window.confetti) window.confetti({ particleCount: 70, spread: 60 });
+      alert("Enhorabona! Has completat l'entrenament de tots els teus punts dèbils.");
       setStudyMode(false);
+      setCurrentIndex(0);
     }
   };
 
-  // Mark as Mastered: sets mistake_count to 0 in Supabase and removes card from queue
   const handleMarkMastered = async () => {
     const currentCard = studyQueue[currentIndex];
     if (!currentCard) return;
@@ -1199,135 +1195,164 @@ function WeaknessesTrainer({ session, onNavigate }) {
       try {
         await supabaseClient
           .from('user_mistakes')
-          .update({ mistake_count: 0 })
+          .update({ mistake_count: 0, last_reviewed_at: new Date().toISOString() })
           .eq('user_id', session.user.id)
           .eq('word_id', currentCard.word_id);
       } catch (err) {
-        console.error('Error actualitzant a Supabase:', err);
+        console.error("Error updating mistake_count in Supabase:", err);
       }
     }
 
     const newQueue = studyQueue.filter((_, idx) => idx !== currentIndex);
-    setMistakes(prev => prev.filter(m => m.word_id !== currentCard.word_id));
+    setMistakes(prev => prev.filter(m => String(m.word_id) !== String(currentCard.word_id)));
     setStudyQueue(newQueue);
     setIsFlipped(false);
 
     if (newQueue.length === 0) {
-      if (window.confetti) window.confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      if (window.confetti) window.confetti({ particleCount: 70, spread: 60 });
       setStudyMode(false);
-    } else {
-      setCurrentIndex(prev => Math.min(prev, newQueue.length - 1));
+      setCurrentIndex(0);
+    } else if (currentIndex >= newQueue.length) {
+      setCurrentIndex(Math.max(0, newQueue.length - 1));
     }
   };
 
+  // Keyboard shortcut for Weaknesses study mode (Space to flip)
+  useEffect(() => {
+    if (!studyMode) return;
+
+    const handleKeyDown = (e) => {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+        return;
+      }
+
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        setIsFlipped(f => !f);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [studyMode]);
+
   if (loading) {
-    return <div className="text-center py-16 text-slate-500 font-mono text-xs">Carregant els teus errors de Supabase...</div>;
+    return (
+      <div className="text-center py-16 text-slate-500 font-mono text-xs">
+        <div className="w-8 h-8 rounded-full border-2 border-crimson-700 border-t-transparent animate-spin mx-auto mb-3"></div>
+        Carregant els teus errors de Supabase...
+      </div>
+    );
   }
 
-  // --- ACTIVE STUDY MODE 3D VIEW ---
+  // --- ACTIVE STUDY MODE VIEW (3D FLASHCARD) ---
   if (studyMode && studyQueue.length > 0) {
-    const currentCard = studyQueue[currentIndex];
+    const currentItem = studyQueue[currentIndex];
 
     return (
-      <div className="space-y-6 max-w-xl mx-auto">
-        <div className="flex items-center justify-between text-xs px-1 font-mono">
-          <span className="text-oxford-900 font-bold uppercase tracking-wider">🏋️ Entrenant Punts Dèbils</span>
-          <button onClick={() => setStudyMode(false)} className="text-slate-500 hover:text-crimson-700 transition-colors font-sans">
-            &larr; Tornar a la llista / Sortir
+      <div className="space-y-6 max-w-2xl mx-auto view-enter">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-crimson-50 text-crimson-700 border border-crimson-100">
+              Sessió d'Entrenament Actiu
+            </span>
+            <h2 className="text-lg font-serif-academic font-bold text-oxford-950 mt-1">
+              Targeta {currentIndex + 1} de {studyQueue.length}
+            </h2>
+          </div>
+          <button
+            onClick={() => setStudyMode(false)}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-semibold transition-all"
+          >
+            ← Tornar a la llista / Sortir
           </button>
         </div>
 
-        <div className="flex items-center justify-between text-xs px-1 font-mono">
-          <span className="text-slate-500">Error <strong>{currentIndex + 1}</strong> de {studyQueue.length}</span>
-          <span className="text-crimson-700 font-bold bg-crimson-50 px-2.5 py-0.5 rounded border border-crimson-200">
-            {currentCard?.mistake_count} errades registrades
-          </span>
-        </div>
-
-        {/* 3D Flashcard */}
-        <div className="w-full h-80 perspective-container cursor-pointer select-none" onClick={() => setIsFlipped(f => !f)}>
-          <div className={`card-3d-inner ${isFlipped ? 'flipped' : ''}`}>
+        {/* 3D FLASHCARD CONTAINER */}
+        <div 
+          className="perspective-container h-72 sm:h-80 w-full cursor-pointer select-none" 
+          onClick={() => setIsFlipped(f => !f)}
+        >
+          <div className={`card-3d-inner shadow-lg ${isFlipped ? 'flipped' : ''}`}>
             
-            {/* FRONT */}
-            <div className="card-face bg-white border-2 border-slate-200/90 p-8 flex flex-col justify-between items-center text-center shadow-md hover:border-oxford-300 transition-colors">
-              <div className="w-full flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span className="uppercase tracking-wider">{currentCard?.tag}</span>
-                <span>Anvers (Prem Espai per girar)</span>
+            {/* FRONT: item.cat */}
+            <div className="card-face bg-gradient-to-br from-[#002147] to-[#041226] text-white p-8 flex flex-col justify-between border-2 border-amber-400/40">
+              <div className="flex justify-between items-center text-xs font-mono text-amber-300">
+                <span className="uppercase tracking-widest">{currentItem.tag}</span>
+                <span className="text-[11px] bg-white/10 px-2 py-0.5 rounded border border-white/20">Clica per girar</span>
               </div>
-
-              <div className="my-auto px-4">
-                <p className="text-xs uppercase font-mono tracking-widest text-crimson-700 font-bold mb-2">Com es diu o conjuga en anglès?</p>
-                <h3 className="text-xl sm:text-2xl font-serif-academic font-bold text-oxford-950 leading-snug">
-                  {currentCard?.cat}
+              <div className="text-center my-auto px-4">
+                <span className="text-xs uppercase font-mono text-slate-400 block mb-2">Com es diu en anglès?</span>
+                <h3 className="text-xl sm:text-2xl font-serif-academic font-bold leading-relaxed text-white">
+                  {currentItem.cat}
                 </h3>
               </div>
-
-              <span className="text-[11px] text-slate-400 font-mono">Espai / Clic per revelar solució &rarr;</span>
+              <div className="text-center text-[11px] font-mono text-slate-400">
+                [Espai] o Fes Clic a la targeta per veure la solució
+              </div>
             </div>
 
-            {/* BACK */}
-            <div className="card-face card-face-back bg-gradient-to-b from-[#001f44] to-[#00152e] text-white p-8 flex flex-col justify-between items-center text-center shadow-lg border-2 border-oxford-800">
-              <div className="w-full flex items-center justify-between text-xs text-amber-300/80 font-mono">
-                <span className="uppercase tracking-wider">Solució Acadèmica</span>
-                <span>Revers</span>
+            {/* BACK: item.eng (or infinitive) */}
+            <div className="card-face card-face-back bg-white text-oxford-950 p-8 flex flex-col justify-between border-2 border-crimson-600 shadow-xl">
+              <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                <span className="text-crimson-700 font-bold uppercase tracking-widest">Solució</span>
+                <span className="bg-rose-50 text-rose-700 font-bold text-[11px] px-2 py-0.5 rounded border border-rose-100">
+                  {currentItem.mistake_count} errades prèvies
+                </span>
               </div>
-
-              <div className="my-auto px-4">
-                <p className="text-xs uppercase font-mono tracking-widest text-amber-300 font-bold mb-2">Anglès Oficial</p>
-                <div className="flex items-center justify-center gap-2">
-                  <h3 className="text-xl sm:text-2xl font-serif-academic font-bold text-white leading-snug">
-                    {currentCard?.eng}
-                  </h3>
-                  {/* 🔊 Audio pronunciation on back of card */}
-                  {currentCard?.eng && (
-                    <button
-                      type="button"
-                      onClick={(e) => speakEnglish(currentCard.eng, e)}
-                      className="p-1 rounded hover:bg-white/10 text-amber-300 hover:text-amber-200 transition-colors text-base select-none shrink-0"
-                      title="Escoltar pronunciació en anglès britànic"
-                    >
-                      🔊
-                    </button>
-                  )}
-                </div>
+              <div className="text-center my-auto px-4">
+                <p className="text-xs uppercase font-mono text-slate-400 mb-2">Anglès acadèmic:</p>
+                <h3 className="text-xl sm:text-2xl font-serif-academic font-bold text-oxford-950 leading-relaxed">
+                  {currentItem.eng}
+                </h3>
+                <p className="text-xs text-slate-500 mt-2 font-sans italic">{currentItem.cat}</p>
               </div>
-
-              <span className="text-[11px] text-slate-300 font-mono">Revisa el punt feble</span>
+              <div className="text-center text-[11px] font-mono text-slate-400">
+                Fes servir els botons inferiors per navegar o marcar com apresa
+              </div>
             </div>
 
           </div>
         </div>
 
-        {/* 3 Action Buttons Row: Prev / Ja me la sé / Next */}
-        <div className="flex items-center justify-between gap-2 pt-2">
+        {/* 3-BUTTON CONTROLS ROW */}
+        <div className="flex items-center gap-3 pt-2">
           <button
             onClick={handlePrevStudyCard}
             disabled={currentIndex === 0}
-            className="px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+            className={`flex-1 py-2.5 rounded-lg border font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 ${
+              currentIndex === 0
+                ? 'border-slate-200 text-slate-300 bg-slate-50 cursor-not-allowed'
+                : 'border-slate-300 bg-white hover:bg-slate-100 text-oxford-900 shadow-xs'
+            }`}
           >
-            &larr; Anterior
+            <span>←</span>
+            <span>Anterior</span>
           </button>
           
           <button
             onClick={handleMarkMastered}
-            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
-            title="Posa a 0 els errors a Supabase i treu de la cua"
+            className="flex-1 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-1.5"
+            title="Marca la paraula com apresa i elimina-la dels teus errors"
           >
-            <span>&check; Ja me la s&eacute;</span>
+            <span>✅</span>
+            <span>Ja me la sé</span>
           </button>
 
           <button
             onClick={handleNextStudyCard}
-            className="px-4 py-2 rounded-lg bg-crimson-700 hover:bg-crimson-800 text-white text-xs font-bold transition-all shadow-xs"
+            className="flex-1 py-2.5 rounded-lg bg-crimson-700 hover:bg-crimson-800 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-1.5"
           >
-            Seg&uuml;ent &rarr;
+            <span>Següent</span>
+            <span>→</span>
           </button>
         </div>
       </div>
     );
   }
 
-  // --- EMPTY STATE ---
+  // --- EMPTY STATE IF 0 MISTAKES ---
   if (mistakes.length === 0) {
     return (
       <div className="rounded-2xl bg-white border border-slate-200 p-12 text-center shadow-sm max-w-lg mx-auto space-y-4">
@@ -1338,50 +1363,59 @@ function WeaknessesTrainer({ session, onNavigate }) {
           Excel·lent! No tens cap error registrat actualment.
         </h2>
         <p className="text-xs text-slate-600 leading-relaxed">
-          El teu expedient està completament net a Supabase. Continua practicant amb les flashcards o els verbs irregulars per consolidar el temari abans de la prova de PAU.
+          El teu expedient està completament net. Quan fallis targetes als mòduls de vocabulari o verbs, apareixeran aquí perquè puguis entrenar-les de manera personalitzada.
         </p>
+        <button
+          onClick={() => onNavigate && onNavigate('vocab')}
+          className="mt-2 px-4 py-2 rounded-lg bg-oxford-900 hover:bg-oxford-800 text-white text-xs font-semibold shadow-xs"
+        >
+          Practicar Vocabulari &rarr;
+        </button>
       </div>
     );
   }
 
-  // --- OXFORD BLUE THEMED LIST VIEW ---
+  // --- MAIN WEAKNESSES LIST VIEW ---
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
-      {/* Prominent Active Study Mode CTA */}
-      <div className="bg-gradient-to-r from-oxford-900 to-[#062c54] text-white p-5 rounded-xl border border-oxford-800 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* HEADER WITH PROMINENT "ENTRENAR PUNTS DÈBILS" BUTTON */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
         <div>
-          <h2 className="text-lg font-serif-academic font-bold text-white">Els Meus Punts Febles ({mistakes.length})</h2>
-          <p className="text-xs text-slate-300 font-sans mt-0.5">Elements que requereixen atenció segons el teu expedient de Supabase.</p>
+          <h2 className="text-lg font-serif-academic font-bold text-oxford-950">
+            Els Meus Errors Registrats ({mistakes.length})
+          </h2>
+          <p className="text-xs text-slate-500 font-sans mt-0.5">
+            Elements registrats a la base de dades ordenats per major nombre d'errades.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={startStudySession} className="px-5 py-2.5 rounded-lg bg-crimson-700 hover:bg-crimson-800 text-white font-bold text-xs tracking-wide transition-all shadow-sm flex items-center gap-2">
-            <span>🏋️ Entrenar Punts Dèbils</span>
+
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={fetchMistakes} 
+            className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition-colors"
+          >
+            🔄 Actualitzar
           </button>
-          <button onClick={fetchMistakes} className="px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold" title="Actualitzar">
-            🔄
+          <button
+            onClick={handleStartStudy}
+            className="px-5 py-2.5 rounded-lg bg-crimson-700 hover:bg-crimson-800 text-white font-bold text-xs tracking-wide shadow-md transition-all flex items-center gap-2 hover:scale-[1.02]"
+          >
+            <span>🏋️ Entrenar Punts Dèbils</span>
           </button>
         </div>
       </div>
 
       <div className="space-y-3">
         {mistakes.map((m, idx) => (
-          <div key={idx} className="bg-white border border-slate-200 p-4 rounded-xl flex items-center justify-between shadow-xs hover:border-slate-300 transition-all">
-            <div className="min-w-0 pr-4">
-              <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">{m.tag}</span>
-              <div className="flex items-center gap-2 mt-1">
-                <h3 className="text-base font-serif-academic font-bold text-oxford-950 truncate">{m.eng}</h3>
-                {m.eng && (
-                  <button
-                    type="button"
-                    onClick={(e) => speakEnglish(m.eng, e)}
-                    className="text-slate-400 hover:text-crimson-700 transition-colors p-0.5 rounded text-xs select-none"
-                    title="Escoltar pronunciació"
-                  >
-                    🔊
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-slate-500 truncate">{m.cat}</p>
+          <div key={idx} className="bg-white border border-slate-200 p-4 rounded-xl flex items-center justify-between shadow-xs hover:border-slate-300 transition-colors">
+            <div>
+              <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                {m.tag}
+              </span>
+              <h3 className="text-base font-serif-academic font-bold text-oxford-950 mt-1">
+                {m.title}
+              </h3>
+              <p className="text-xs text-slate-500 font-sans">{m.subtitle}</p>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-crimson-50 border border-crimson-200 text-crimson-800 font-mono text-xs font-bold whitespace-nowrap">
               {m.mistake_count} {m.mistake_count === 1 ? 'error' : 'errors'}
@@ -1393,7 +1427,7 @@ function WeaknessesTrainer({ session, onNavigate }) {
   );
 }
 
-// --- 4. AUTH WRAPPER (AuthApp & AuthView) ---
+// --- AUTH WRAPPER (AuthApp & AuthView) ---
 function AuthApp() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1411,7 +1445,11 @@ function AuthApp() {
   }, []);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center font-mono text-xs text-oxford-900">Iniciant JP ENGLISH HUB...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center font-mono text-xs text-oxford-900 bg-[#f8fafc]">
+        Iniciant JP ENGLISH HUB...
+      </div>
+    );
   }
 
   if (!session) {
@@ -1443,40 +1481,57 @@ function AuthView({ onAuthSuccess }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
-      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-400 bg-white p-1 shadow-md mb-4">
-        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuANdXRXZBg9cU1j_sfQ2wF0gfNyU-WjnrBPhwFOdnBtWPJBAgmO-GHhe0RVI59drNLxSn5I_ExV80sfuqPeWqh7JCvAqSwdlaQ7HdsDMYpS111Dce5dA21_LpwJtyKyqCpJJ3oAQJfJDwP99ZkShKr9_sTB-SG3a98quS72SacRrUQT_wSQc4LZfrGx_aYO2vYhHcJPjFM8UQh1IYtiUZxQXrojerqzLEghEdm00pSiS9aBGxFsr-C9eg" alt="Emblem" className="w-full h-full object-cover rounded-full" />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc] p-4 font-sans">
+      <div className="mb-6 text-center">
+        <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-br from-oxford-900 to-crimson-700 shadow-md mx-auto mb-3 overflow-hidden flex items-center justify-center bg-white border-2 border-amber-400">
+          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuANdXRXZBg9cU1j_sfQ2wF0gfNyU-WjnrBPhwFOdnBtWPJBAgmO-GHhe0RVI59drNLxSn5I_ExV80sfuqPeWqh7JCvAqSwdlaQ7HdsDMYpS111Dce5dA21_LpwJtyKyqCpJJ3oAQJfJDwP99ZkShKr9_sTB-SG3a98quS72SacRrUQT_wSQc4LZfrGx_aYO2vYhHcJPjFM8UQh1IYtiUZxQXrojerqzLEghEdm00pSiS9aBGxFsr-C9eg" alt="JP Emblem" className="w-full h-full object-cover rounded-full" />
+        </div>
+        <h1 className="text-2xl font-serif-academic font-bold text-oxford-950">JP ENGLISH HUB</h1>
+        <p className="text-xs uppercase font-mono tracking-widest text-crimson-700 font-bold mt-0.5">Plataforma Acadèmica Batxillerat &amp; PAU</p>
       </div>
-      <h1 className="text-2xl font-serif-academic font-bold text-oxford-950 mb-1">JP ENGLISH HUB</h1>
-      <p className="text-xs uppercase font-mono tracking-widest text-crimson-700 font-bold mb-6">Plataforma Acadèmica Batxillerat &bull; PAU</p>
 
-      <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200/90 shadow-md overflow-hidden">
-        <div className="grid grid-cols-2 border-b border-slate-100 text-xs font-semibold">
-          <button onClick={() => setAuthMode('login')} className={`py-3 text-center transition-all ${authMode === 'login' ? 'border-b-2 border-crimson-700 text-oxford-950 font-bold' : 'text-slate-500 hover:text-slate-800'}`}>Iniciar Sessió</button>
-          <button onClick={() => setAuthMode('register')} className={`py-3 text-center transition-all ${authMode === 'register' ? 'border-b-2 border-crimson-700 text-oxford-950 font-bold' : 'text-slate-500 hover:text-slate-800'}`}>Crear Compte</button>
+      <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex border-b border-slate-200 bg-slate-50/50">
+          <button onClick={() => setAuthMode('login')} className={`flex-1 py-3 text-xs font-semibold tracking-wide transition-all ${authMode === 'login' ? 'bg-white text-oxford-950 border-b-2 border-crimson-700 font-bold' : 'text-slate-500 hover:text-slate-800'}`}>
+            Iniciar Sessió
+          </button>
+          <button onClick={() => setAuthMode('register')} className={`flex-1 py-3 text-xs font-semibold tracking-wide transition-all ${authMode === 'register' ? 'bg-white text-oxford-950 border-b-2 border-crimson-700 font-bold' : 'text-slate-500 hover:text-slate-800'}`}>
+            Crear Compte
+          </button>
         </div>
 
-        <form onSubmit={handleAuth} className="p-6 space-y-4">
-          {errorMsg && <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">{errorMsg}</div>}
-          <div>
-            <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-slate-600 mb-1">Correu Electrònic</label>
-            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="alumne@institut.cat" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-sans focus:border-oxford-900 focus:ring-0" />
-          </div>
-          <div>
-            <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-slate-600 mb-1">Contrasenya</label>
-            <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs font-sans focus:border-oxford-900 focus:ring-0" />
-          </div>
-          <button type="submit" className="w-full py-2.5 rounded-lg bg-oxford-900 hover:bg-oxford-800 text-white font-bold text-xs tracking-wide transition-all shadow-sm">
-            {authMode === 'login' ? 'Entrar a la Plataforma &rarr;' : 'Completar Registre &rarr;'}
-          </button>
-        </form>
+        <div className="p-6 sm:p-8">
+          {errorMsg && (
+            <div className="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+              {errorMsg}
+            </div>
+          )}
 
-        <div className="bg-slate-50 p-3 border-t border-slate-100 text-center text-[11px] text-slate-500">
+          <form onSubmit={handleAuth} className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-mono font-bold tracking-wider text-slate-600 uppercase mb-1.5">Correu Electrònic</label>
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="alumne@institut.cat" className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-oxford-700 focus:border-oxford-700" />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-mono font-bold tracking-wider text-slate-600 uppercase mb-1.5">Contrasenya</label>
+              <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className="w-full px-3.5 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-oxford-700 focus:border-oxford-700" />
+            </div>
+
+            <button type="submit" className="w-full py-2.5 rounded-lg bg-oxford-900 hover:bg-oxford-800 text-white font-bold text-xs tracking-wide transition-all shadow-sm">
+              {authMode === 'login' ? 'Entrar a la Plataforma →' : 'Registrar-me →'}
+            </button>
+          </form>
+        </div>
+
+        <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 text-center text-[11px] text-slate-500 font-sans">
           Seguretat d'accés gestionada oficialment amb Supabase.
         </div>
       </div>
 
-      <p className="text-[11px] text-slate-400 mt-6 font-mono">JP ENGLISH HUB &bull; Desenvolupat per <strong className="text-crimson-700">JanPick</strong></p>
+      <div className="mt-8 text-center text-[11px] text-slate-400 font-sans">
+        JP ENGLISH HUB &bull; Desenvolupat per <strong className="text-crimson-700 font-bold">JanPick</strong>
+      </div>
     </div>
   );
 }
